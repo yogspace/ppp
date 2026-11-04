@@ -129,7 +129,6 @@ class Floaties {
     this.renderer = new THREE.WebGLRenderer({
       alpha: true,
       antialias: true,
-      preserveDrawingBuffer: true,
     });
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -169,6 +168,7 @@ class Floaties {
 
   add(target: Target) {
     this.targets.add(target);
+    this.last = 0;
     if (!this.frame) this.frame = requestAnimationFrame(this.tick);
   }
 
@@ -180,14 +180,23 @@ class Floaties {
     return this.targets.size === 0;
   }
 
+  private last = 0;
+
+  /** 30 frames a second – they drift slowly, that is plenty. */
   private tick = (now: number) => {
     this.frame = 0;
     if (!this.targets.size) return;
+    if (now - this.last < 32) {
+      this.frame = requestAnimationFrame(this.tick);
+      return;
+    }
+    this.last = now;
     const t = this.still ? 0 : now / 1000;
     this.lean.x += (this.lean.tx - this.lean.x) * 0.04;
     this.lean.y += (this.lean.ty - this.lean.y) * 0.04;
     for (const target of this.targets) this.draw(target, t);
-    this.frame = requestAnimationFrame(this.tick);
+    // Less motion asked for: drawn once, then still.
+    if (!this.still) this.frame = requestAnimationFrame(this.tick);
   };
 
   private draw(target: Target, t: number) {
@@ -195,7 +204,7 @@ class Floaties {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
     if (!width || !height) return;
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    const ratio = Math.min(window.devicePixelRatio || 1, 1);
     const w = Math.round(width * ratio);
     const h = Math.round(height * ratio);
     if (canvas.width !== w || canvas.height !== h) {

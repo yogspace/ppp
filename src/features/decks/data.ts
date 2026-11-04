@@ -25,10 +25,22 @@ export const stickersOf = (rows: StickerRows): StickerData[] =>
 
 type Slide = Deck["slides"][number];
 
+/** “4 NOV 2026” – a postmark's date. */
+const postmark = (iso: string) =>
+  new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "Europe/Berlin",
+  })
+    .format(new Date(iso))
+    .toUpperCase();
+
 const slideOf = (
   slide: Slide,
   index: number,
-  deckLook: ThemeLook
+  deckLook: ThemeLook,
+  posted: string
 ): SlideData | null => {
   const base = {
     id: slide.id ?? `slide-${index}`,
@@ -103,6 +115,18 @@ const slideOf = (
         quote: slide.quote,
         author: slide.author ?? "",
       };
+    case "card":
+      return {
+        ...base,
+        design: "card",
+        to: slide.to ?? "",
+        stamp:
+          pictureOf(slide.stamp, "small") ?? base.stickers[0]?.picture ?? null,
+        posted,
+        headline: slide.headline ?? "",
+        message: slide.message,
+        from: slide.from ?? "",
+      };
     case "blank":
       return { ...base, design: "blank" };
     default:
@@ -121,7 +145,7 @@ export const deckData = (deck: Deck): DeckData => {
       ? deck.transition
       : DEFAULT_TRANSITION,
     slides: (deck.slides ?? []).flatMap((slide, index) => {
-      const data = slideOf(slide, index, deckLook);
+      const data = slideOf(slide, index, deckLook, postmark(deck.createdAt));
       return data ? [data] : [];
     }),
     arrangement: readArrangement(deck.arrangement),

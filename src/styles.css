@@ -34,6 +34,10 @@
   font-display: swap;
 }
 
+/* A slide on a screen held upright – the stage taller than wide
+   (player/stage.tsx): things stack instead of standing side by side. */
+@custom-variant tall (@container stage (aspect-ratio < 1));
+
 @theme {
   /* The site's own words (the front page, the controls): Pally, rounded. */
   --font-sans: "Pally", ui-rounded, system-ui, sans-serif;

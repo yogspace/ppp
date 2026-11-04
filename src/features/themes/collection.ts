@@ -35,27 +35,62 @@ export const Themes: CollectionConfig = {
     delete: admins,
   },
   admin: {
-    group: "Look",
+    group: "Library",
     useAsTitle: "name",
     defaultColumns: ["name", "background", "font", "updatedAt"],
+    description:
+      "Color schemes, fonts and backgrounds – picked by a deck, a slide or a card.",
   },
   fields: [
     { name: "name", type: "text", required: true },
+    // How it looks, live, beside the fields.
     {
-      type: "row",
+      name: "preview",
+      type: "ui",
+      admin: {
+        position: "sidebar",
+        components: { Field: "@/features/themes/theme-preview#ThemePreview" },
+      },
+    },
+    {
+      type: "collapsible",
+      label: "Colors",
       fields: [
-        color("bg", "Background", DEFAULT_LOOK.bg),
-        color("text", "Text", DEFAULT_LOOK.text),
-        color(
-          "accent",
-          "Accent",
-          DEFAULT_LOOK.accent,
-          "Bullets, quote marks, the floaties, the speech bubble."
-        ),
+        {
+          type: "row",
+          fields: [
+            color("bg", "Background", DEFAULT_LOOK.bg),
+            color("text", "Text", DEFAULT_LOOK.text),
+            color(
+              "accent",
+              "Accent",
+              DEFAULT_LOOK.accent,
+              "Bullets, quote marks, floaties, the seal."
+            ),
+          ],
+        },
+        {
+          type: "row",
+          fields: [
+            color(
+              "paper",
+              "Card paper",
+              DEFAULT_LOOK.paper,
+              "A card's paper and envelope."
+            ),
+            color(
+              "paperText",
+              "Card text",
+              DEFAULT_LOOK.paperText,
+              "The words on it."
+            ),
+          ],
+        },
       ],
     },
     {
-      type: "row",
+      type: "collapsible",
+      label: "Type",
       fields: [
         {
           name: "font",
@@ -66,6 +101,7 @@ export const Themes: CollectionConfig = {
             value,
             label,
           })),
+          admin: { width: "50%" },
         },
         {
           name: "caps",
@@ -76,49 +112,35 @@ export const Themes: CollectionConfig = {
       ],
     },
     {
-      name: "background",
-      type: "radio",
-      required: true,
-      defaultValue: DEFAULT_LOOK.background,
-      options: Object.entries(BACKGROUNDS).map(([value, label]) => ({
-        value,
-        label,
-      })),
-    },
-    {
-      name: "picture",
-      type: "upload",
-      relationTo: "media",
-      required: true,
-      admin: {
-        condition: (_, siblings) => siblings?.background === "picture",
-        description:
-          "Covers the whole screen. A video plays muted, on a loop. Pick text colors that read on it.",
-      },
-    },
-    {
-      name: "grain",
-      type: "checkbox",
-      label: "Grain",
-      defaultValue: false,
-      admin: { description: "A fine film grain over everything." },
-    },
-    {
       type: "collapsible",
-      label: "On cards",
-      admin: { initCollapsed: true },
+      label: "Background",
       fields: [
         {
-          type: "row",
-          fields: [
-            color(
-              "paper",
-              "Card",
-              DEFAULT_LOOK.paper,
-              "The card's paper – the page around it takes the background."
-            ),
-            color("paperText", "Card text", DEFAULT_LOOK.paperText),
-          ],
+          name: "background",
+          type: "radio",
+          required: true,
+          defaultValue: DEFAULT_LOOK.background,
+          options: Object.entries(BACKGROUNDS).map(([value, label]) => ({
+            value,
+            label,
+          })),
+        },
+        {
+          name: "picture",
+          type: "upload",
+          relationTo: "media",
+          required: true,
+          admin: {
+            condition: (_, siblings) => siblings?.background === "picture",
+            description:
+              "Covers the whole screen. A video plays muted, on a loop. Pick text colors that read on it.",
+          },
+        },
+        {
+          name: "grain",
+          type: "checkbox",
+          label: "Grain – a fine film grain over everything",
+          defaultValue: false,
         },
       ],
     },

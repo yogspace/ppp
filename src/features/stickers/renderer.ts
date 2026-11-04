@@ -8,7 +8,8 @@ import type { StickerArt } from "./art";
  * dragged, laid out and animated there); every frame the renderer reads
  * where the box is and puts the sticker there: a thin piece of vinyl with
  * a rounded white rim, glossy, its shadow on the slide below. It leans
- * towards the pointer, wobbles when thrown, lifts when held.
+ * towards the pointer, wobbles when thrown, lifts when held – and is drawn
+ * again only when any of that changes.
  */
 
 /** Where a sticker's box is now – screen px, its picture's width, degrees. */
@@ -24,6 +25,10 @@ export type StickerPose = {
 type Spring = { value: number; velocity: number; target: number };
 
 const spring = (value = 0): Spring => ({ value, velocity: 0, target: value });
+
+/** Still on its way – worth another frame. */
+const moving = (s: Spring) =>
+  Math.abs(s.velocity) > 1e-3 || Math.abs(s.target - s.value) > 1e-3;
 
 const step = (s: Spring, dt: number, stiffness = 140, damping = 13) => {
   s.velocity += (stiffness * (s.target - s.value) - damping * s.velocity) * dt;
@@ -60,7 +65,8 @@ type Entry = {
   lift: Spring;
   wobble: Spring;
   last: { x: number; y: number } | null;
-  phase: number;
+  /** Where it was drawn last. */
+  pose: StickerPose | null;
 };
 
 /** The face's coordinates as its texture's: x across, y up from the bottom. */
@@ -92,6 +98,8 @@ export class StickerRenderer {
   private entries = new Set<Entry>();
   private pointer = { x: -1e5, y: -1e5 };
   private frame = 0;
+  /** Something came, went or the screen changed: draw the next frame. */
+  private dirty = true;
   private lastTime = 0;
   private width = 0;
   private height = 0;
@@ -131,9 +139,10 @@ export class StickerRenderer {
   }
 
   private resize() {
+    this.dirty = true;
     this.width = window.innerWidth;
     this.height = window.innerHeight;
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.setSize(this.width, this.height, false);
     this.camera.aspect = this.width / this.height;
     // At this distance one unit on the z = 0 plane is one CSS pixel.
@@ -246,12 +255,14 @@ export class StickerRenderer {
       lift: spring(),
       wobble: spring(),
       last: null,
-      phase: Math.random() * Math.PI * 2,
+      pose: null,
     };
     this.entries.add(entry);
+    this.dirty = true;
     this.start();
     return () => {
       this.entries.delete(entry);
+      this.dirty = true;
       this.scene.remove(holder);
       shadow.geometry.dispose();
       (shadow.material as THREE.Material).dispose();
@@ -267,24 +278,46 @@ export class StickerRenderer {
     }
   }
 
+  /**
+   * Every frame each sticker's box is read (cheap); the scene is drawn only
+   * when one of them moved or is still settling – resting stickers cost no
+   * GPU at all.
+   */
   private tick = (now: number) => {
     this.frame = 0;
     const dt = Math.min(0.05, (now - this.lastTime) / 1000) || 1 / 60;
     this.lastTime = now;
-    for (const entry of this.entries) this.place(entry, dt, now);
-    this.renderer.render(this.scene, this.camera);
+    let changed = this.dirty;
+    for (const entry of this.entries) {
+      if (this.place(entry, dt)) changed = true;
+    }
+    if (changed) this.renderer.render(this.scene, this.camera);
+    this.dirty = false;
     if (this.entries.size) this.frame = requestAnimationFrame(this.tick);
+    else this.renderer.clear();
   };
 
-  private place(entry: Entry, dt: number, now: number) {
+  /** Puts a sticker where its box is – true when that changed anything. */
+  private place(entry: Entry, dt: number) {
     const pose = entry.read();
     if (!pose || pose.width < 1) {
+      const was = entry.holder.visible;
       entry.holder.visible = false;
       entry.last = null;
-      return;
+      entry.pose = null;
+      return was;
     }
     const built = this.built.get(entry.art);
-    if (!built) return;
+    if (!built) return false;
+    const before = entry.pose;
+    const moved =
+      !(before && entry.holder.visible) ||
+      Math.abs(before.x - pose.x) > 0.05 ||
+      Math.abs(before.y - pose.y) > 0.05 ||
+      Math.abs(before.width - pose.width) > 0.05 ||
+      Math.abs(before.rotation - pose.rotation) > 0.01 ||
+      before.lift !== pose.lift;
+    entry.pose = pose;
     entry.holder.visible = true;
     // The face is wider than the picture by the rim.
     const size = pose.width / entry.art.pictureShare;
@@ -308,15 +341,12 @@ export class StickerRenderer {
       const dx = this.pointer.x - pose.x;
       const dy = this.pointer.y - pose.y;
       const closeness = clamp(1 - Math.hypot(dx, dy) / (near * 2.2), 0, 1);
-      const sway = Math.sin(now / 1300 + entry.phase) * 0.06;
       entry.leanY.target =
         clamp(dx / near, -1, 1) * MAX_LEAN * closeness +
-        clamp(vx / 2600, -0.5, 0.5) +
-        sway;
+        clamp(vx / 2600, -0.5, 0.5);
       entry.leanX.target =
         clamp(dy / near, -1, 1) * MAX_LEAN * closeness +
-        clamp(vy / 2600, -0.5, 0.5) +
-        sway * 0.6;
+        clamp(vy / 2600, -0.5, 0.5);
       entry.wobble.target = clamp(vx / 4000, -0.25, 0.25);
     }
     entry.lift.target = pose.lift;
@@ -340,6 +370,13 @@ export class StickerRenderer {
     entry.shadow.scale.setScalar(size * (1 + lift * 0.05));
     (entry.shadow.material as THREE.MeshBasicMaterial).opacity =
       0.3 - lift * 0.05;
+    return (
+      moved ||
+      moving(entry.leanX) ||
+      moving(entry.leanY) ||
+      moving(entry.wobble) ||
+      moving(entry.lift)
+    );
   }
 
   dispose() {

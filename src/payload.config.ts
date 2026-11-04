@@ -5,7 +5,6 @@ import { buildConfig } from "payload";
 import sharp from "sharp";
 import { seedAdmin } from "@/features/admin/seed-admin";
 import { Users } from "@/features/admin/users";
-import { Cards } from "@/features/cards/collection";
 import { Decks } from "@/features/decks/collection";
 import { Media } from "@/features/media/collection";
 import { SEEDS_PATH } from "@/features/seeds/definitions";
@@ -17,10 +16,10 @@ import { serverUrl } from "@/lib/server-url";
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
- * ppp's backend – slides and greeting cards, just for me:
+ * ppp's backend – slides (and greeting cards), just for me:
  *
- * - decks    slides to present, each slide a design (features/decks)
- * - cards    greeting cards that turn over (features/cards)
+ * - decks    slides to present, each slide a design (features/decks) –
+ *            a greeting card is a deck with one Card slide
  * - themes   color schemes, fonts and backgrounds (features/themes)
  * - media    pictures, stickers, background videos
  * - users    the admin login
@@ -38,6 +37,11 @@ export default buildConfig({
       icons: [{ rel: "icon", type: "image/svg+xml", url: "/icon.svg" }],
     },
     components: {
+      // ppp's mark over the login, and on top of every page.
+      graphics: {
+        Logo: "@/features/admin/graphics#AdminLogo",
+        Icon: "@/features/admin/graphics#AdminIcon",
+      },
       // “Seeds” at the end of the navigation – the demo, at a click.
       afterNavLinks: ["@/features/seeds/nav-link#SeedsNavLink"],
       views: {
@@ -56,7 +60,7 @@ export default buildConfig({
     },
   },
   // The admin's groups follow this order.
-  collections: [Decks, Cards, Media, Themes, Users],
+  collections: [Decks, Media, Themes, Users],
   endpoints: [seedEndpoint],
   // The login cookie, `ppp-token` – only sent along from our own pages.
   cookiePrefix: "ppp",

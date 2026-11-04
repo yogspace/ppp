@@ -125,12 +125,7 @@ const rich = (...paragraphs: string[]) => ({
 const clear = async (payload: Payload) => {
   await payload.delete({
     collection: "decks",
-    where: { slug: { equals: DEMO_DECK } },
-    ...local,
-  });
-  await payload.delete({
-    collection: "cards",
-    where: { slug: { equals: DEMO_CARD } },
+    where: { slug: { in: [DEMO_DECK, DEMO_CARD] } },
     ...local,
   });
   await payload.delete({
@@ -193,14 +188,10 @@ const themes = async (payload: Payload) => {
   return { ids, made };
 };
 
-const exists = async (
-  payload: Payload,
-  collection: "decks" | "cards",
-  slug: string
-) =>
+const exists = async (payload: Payload, slug: string) =>
   (
     await payload.count({
-      collection,
+      collection: "decks",
       where: { slug: { equals: slug } },
       overrideAccess: true,
     })
@@ -208,13 +199,14 @@ const exists = async (
 
 /**
  * The demo: the deck /hello – every design, a few transitions, good ones
- * and 💾 ones – and the card /for-you, with the stickers, photos and themes
- * they show. Fill adds what is missing; replace makes it all anew.
+ * and 💾 ones – and the card /for-you (a deck of one Card slide), with the
+ * stickers, photos and themes they show. Fill adds what is missing; replace
+ * makes it all anew.
  */
 export const seedDemo = async (payload: Payload, mode: Mode) => {
   if (mode === "replace") await clear(payload);
-  const deckThere = await exists(payload, "decks", DEMO_DECK);
-  const cardThere = await exists(payload, "cards", DEMO_CARD);
+  const deckThere = await exists(payload, DEMO_DECK);
+  const cardThere = await exists(payload, DEMO_CARD);
   if (deckThere && cardThere) {
     return `/${DEMO_DECK} and /${DEMO_CARD} are there already – nothing added.`;
   }
@@ -318,6 +310,17 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
             ),
           },
           {
+            blockType: "card",
+            to: "you",
+            headline: "Thank\nyou!",
+            message:
+              "Thanks for clicking through. A card is a slide too – this one even folds open.",
+            from: "ppp",
+            theme: look.luminous,
+            transition: "blob",
+            stickers: stickers("heart", "star"),
+          },
+          {
             blockType: "poster",
             text: "The\nend",
             align: "center",
@@ -332,18 +335,24 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
 
   if (!cardThere) {
     await payload.create({
-      collection: "cards",
+      collection: "decks",
       ...local,
       data: {
         title: "A card for Anna",
         slug: DEMO_CARD,
         theme: look.bubblegum,
-        to: "Anna",
-        headline: "You\nare\ngreat",
-        message:
-          "Just wanted to say: you're doing great. Have some cake, a nap, and a sticker or two.\n\nLots of love",
-        from: "Max",
-        stickers: stickers("heart", "star", "icecream"),
+        transition: "fade",
+        slides: [
+          {
+            blockType: "card",
+            to: "Anna",
+            headline: "You\nare\ngreat",
+            message:
+              "Just wanted to say: you're doing great. Have some cake, a nap, and a sticker or two.\n\nLots of love",
+            from: "Max",
+            stickers: stickers("heart", "star", "icecream"),
+          },
+        ],
       },
     });
   }

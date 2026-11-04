@@ -22,9 +22,10 @@ export const Media: CollectionConfig = {
     delete: admins,
   },
   admin: {
-    group: "Content",
+    group: "Library",
     description:
       "Pictures, stickers and background videos. A sticker is a PNG with a transparent background.",
+    listSearchableFields: ["filename", "alt"],
     defaultColumns: ["filename", "alt", "updatedAt"],
   },
   upload: {

@@ -19,7 +19,8 @@ const TILTS = [-2.5, 1.8, -1.2, 2.6, -1.8, 1.2];
 
 /**
  * The front page. For everyone: just the word mark. Logged in: everything
- * I made – decks and cards, each in its theme – and the way to make more.
+ * I made – decks and cards (a deck of one Card slide), each in its theme –
+ * and the way to make more.
  */
 const Home = async () => {
   const user = await viewer();
@@ -31,36 +32,23 @@ const Home = async () => {
     );
   }
   const local = await payload();
-  const [decks, cards] = await Promise.all([
-    local.find({
-      collection: "decks",
-      depth: 1,
-      limit: 200,
-      sort: "-updatedAt",
-    }),
-    local.find({
-      collection: "cards",
-      depth: 1,
-      limit: 200,
-      sort: "-updatedAt",
-    }),
-  ]);
-  const tiles: Tile[] = [
-    ...decks.docs.map((deck) => ({
+  const decks = await local.find({
+    collection: "decks",
+    depth: 1,
+    limit: 200,
+    sort: "-updatedAt",
+  });
+  const tiles: Tile[] = decks.docs.map((deck) => {
+    const slides = deck.slides ?? [];
+    const card = slides.length === 1 && slides[0].blockType === "card";
+    return {
       id: deck.id,
       href: `/${deck.slug}`,
       title: deck.title,
-      note: `Deck · ${deck.slides?.length ?? 0} slides`,
+      note: card ? "Card" : `Deck · ${slides.length} slides`,
       theme: deck.theme,
-    })),
-    ...cards.docs.map((card) => ({
-      id: card.id,
-      href: `/${card.slug}`,
-      title: card.to ? `For ${card.to}` : card.title,
-      note: "Card",
-      theme: card.theme,
-    })),
-  ];
+    };
+  });
 
   return (
     <main className="min-h-dvh bg-[#efeff5] px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-16 text-[#0b1533] sm:px-10">
@@ -72,12 +60,6 @@ const Home = async () => {
             href="/admin/collections/decks/create"
           >
             + Deck
-          </a>
-          <a
-            className="rounded-full bg-[#0b1533] px-4 py-2.5 text-white transition-[scale] duration-200 ease-spring hover:scale-105 active:scale-95"
-            href="/admin/collections/cards/create"
-          >
-            + Card
           </a>
           <a
             className="rounded-full px-4 py-2.5 ring-2 ring-[#0b1533]/15 transition-[scale] duration-200 ease-spring hover:scale-105 active:scale-95"

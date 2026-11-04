@@ -21,7 +21,7 @@ export const editor = lexicalEditor({
     ItalicFeature(),
     UnderlineFeature(),
     StrikethroughFeature(),
-    LinkFeature({ enabledCollections: ["decks", "cards"] }),
+    LinkFeature({ enabledCollections: ["decks"] }),
     InlineToolbarFeature(),
   ],
 });

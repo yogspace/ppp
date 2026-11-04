@@ -1,0 +1,22 @@
+/*
+ * The admin keeps Payload's own look. Only the themes' fonts come along, so
+ * a theme's preview (features/themes/theme-preview.tsx) shows its type.
+ */
+@font-face {
+  font-family: "Switzer";
+  src: url("/fonts/Switzer-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Pally";
+  src: url("/fonts/Pally-Variable.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Gambarino";
+  src: url("/fonts/Gambarino-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}

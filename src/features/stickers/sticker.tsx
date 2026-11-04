@@ -33,6 +33,8 @@ type Props = {
   hidden: boolean;
   /** Seconds before it flies in. */
   delay: number;
+  /** Drawn this much bigger than its placement says. */
+  scale: number;
   /** The stage it lies on – sizes and the bounds of a throw. */
   layerRef: RefObject<HTMLDivElement | null>;
   onArrange?: (id: string, placement: Placement | null) => void;
@@ -60,6 +62,7 @@ export const Sticker = ({
   arranging,
   hidden,
   delay,
+  scale,
   layerRef,
   onArrange,
 }: Props) => {
@@ -159,6 +162,36 @@ export const Sticker = ({
   );
 
   // ── Dragging and throwing ─────────────────────────────────────────────
+
+  /**
+   * How far it may be moved from its place (px, per axis) – the whole
+   * sticker, turned as it is, stays on its stage.
+   */
+  const bounds = () => {
+    const layer = layerRef.current;
+    const box = boxRef.current;
+    if (!(layer && box)) return null;
+    const width = layer.clientWidth;
+    const height = layer.clientHeight;
+    const p = placementRef.current;
+    const rad = (p.r * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(rad));
+    const sin = Math.abs(Math.sin(rad));
+    const halfW = (box.offsetWidth * cos + box.offsetHeight * sin) / 2;
+    const halfH = (box.offsetWidth * sin + box.offsetHeight * cos) / 2;
+    const range = (at: number, half: number, size: number) =>
+      half * 2 >= size
+        ? ([size / 2 - at, size / 2 - at] as const)
+        : ([half - at, size - half - at] as const);
+    return {
+      x: range(p.x * width, halfW, width),
+      y: range(p.y * height, halfH, height),
+    };
+  };
+
+  const within = (value: number, [min, max]: readonly [number, number]) =>
+    Math.min(max, Math.max(min, value));
+
   const held = useRef<{ id: number; x: number; y: number; at: Point } | null>(
     null
   );
@@ -187,8 +220,11 @@ export const Sticker = ({
   const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
     const h = held.current;
     if (h?.id !== event.pointerId) return;
-    x.set(h.x + event.clientX - h.at.x);
-    y.set(h.y + event.clientY - h.at.y);
+    const b = bounds();
+    const nextX = h.x + event.clientX - h.at.x;
+    const nextY = h.y + event.clientY - h.at.y;
+    x.set(b ? within(nextX, b.x) : nextX);
+    y.set(b ? within(nextY, b.y) : nextY);
     const now = performance.now();
     trail.current.push({ t: now, x: event.clientX, y: event.clientY });
     while (trail.current.length > 2 && now - trail.current[0].t > 90) {
@@ -205,19 +241,16 @@ export const Sticker = ({
       save(commit());
       return;
     }
-    // Thrown: it glides on and bounces off the stage's edges.
+    // Thrown: it glides on and bounces off the stage's edges – never past.
     const first = trail.current[0];
     const last = trail.current[trail.current.length - 1];
     const dt = first && last ? (last.t - first.t) / 1000 : 0;
-    const layer = layerRef.current;
-    if (!(layer && dt > 0.01)) {
+    const b = bounds();
+    if (!(b && dt > 0.01)) {
       busyRef.current = false;
       commit();
       return;
     }
-    const p = placementRef.current;
-    const width = layer.clientWidth;
-    const height = layer.clientHeight;
     let running = 2;
     const done = () => {
       running--;
@@ -244,8 +277,8 @@ export const Sticker = ({
         onComplete: done,
       });
     throws.current = [
-      glide(x, (last.x - first.x) / dt, -p.x * width, (1 - p.x) * width),
-      glide(y, (last.y - first.y) / dt, -p.y * height, (1 - p.y) * height),
+      glide(x, (last.x - first.x) / dt, ...b.x),
+      glide(y, (last.y - first.y) / dt, ...b.y),
     ];
   };
 
@@ -287,10 +320,10 @@ export const Sticker = ({
       style={{
         left: `${placement.x * 100}%`,
         top: `${placement.y * 100}%`,
-        width: `${placement.w * 100}%`,
+        width: `${placement.w * scale * 100}%`,
         aspectRatio: `${aspect}`,
-        marginLeft: `${-placement.w * 50}%`,
-        marginTop: `${(-placement.w / aspect) * 50}%`,
+        marginLeft: `${-placement.w * scale * 50}%`,
+        marginTop: `${((-placement.w * scale) / aspect) * 50}%`,
         x,
         y,
         rotate: placement.r,

@@ -2,6 +2,7 @@ import type { Block, Field, Tab } from "payload";
 import { stickersField } from "@/features/stickers/fields";
 import { transitionOptions } from "@/features/transitions/kinds";
 import { editor } from "@/lib/editor";
+import { DESIGN_LABELS, type DesignSlug } from "./design-labels";
 
 /**
  * The slides' designs – each a block. A design decides the layout and how
@@ -14,36 +15,53 @@ const LOOK: Tab = {
   label: "Look",
   fields: [
     {
-      name: "theme",
-      type: "relationship",
-      relationTo: "themes",
-      admin: { description: "This slide's own theme – empty: the deck's." },
-    },
-    {
-      name: "transition",
-      type: "select",
-      admin: {
-        description:
-          "How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.",
-      },
-      options: transitionOptions(),
+      type: "row",
+      fields: [
+        {
+          name: "theme",
+          type: "relationship",
+          relationTo: "themes",
+          admin: {
+            width: "50%",
+            description: "Empty: the deck's theme.",
+          },
+        },
+        {
+          name: "transition",
+          type: "select",
+          options: transitionOptions(),
+          admin: {
+            width: "50%",
+            description:
+              "How it comes in. Empty: the deck's. 💾 PowerPoint 2003.",
+          },
+        },
+      ],
     },
   ],
 };
 
+/** Array rows named by their words (admin/row-label.tsx). */
+const NAMED_ROWS = {
+  components: { RowLabel: "@/features/admin/row-label#TextRowLabel" },
+} as const;
+
 const STICKERS: Tab = { label: "Stickers", fields: [stickersField()] };
 
-const design = (
-  slug: string,
-  label: string,
-  about: string,
-  content: Field[]
-): Block => ({
+const design = (slug: DesignSlug, about: string, content: Field[]): Block => ({
   slug,
-  labels: { singular: label, plural: label },
+  labels: {
+    singular: DESIGN_LABELS[slug].label,
+    plural: DESIGN_LABELS[slug].label,
+  },
   imageURL: `/designs/${slug}.svg`,
   imageAltText: about,
-  admin: { disableBlockName: false },
+  admin: {
+    // Named by their design and words instead (slide-label.tsx).
+    disableBlockName: true,
+    group: DESIGN_LABELS[slug].group,
+    components: { Label: "@/features/decks/slide-label#SlideLabel" },
+  },
   fields: [
     {
       type: "tabs",
@@ -64,7 +82,7 @@ const picture = (description?: string): Field => ({
 });
 
 export const DESIGNS: Block[] = [
-  design("poster", "Big type", "Huge words filling the slide, word by word.", [
+  design("poster", "Huge words filling the slide, word by word.", [
     {
       name: "text",
       type: "textarea",
@@ -91,7 +109,7 @@ export const DESIGNS: Block[] = [
       },
     },
   ]),
-  design("cover", "Title", "A title, with a little line above and below.", [
+  design("cover", "A title, with a little line above and below.", [
     {
       name: "kicker",
       type: "text",
@@ -100,11 +118,11 @@ export const DESIGNS: Block[] = [
     { name: "title", type: "textarea", required: true, admin: { rows: 2 } },
     { name: "subtitle", type: "textarea", admin: { rows: 2 } },
   ]),
-  design("words", "Text", "A heading and a few sentences.", [
+  design("words", "A heading and a few sentences.", [
     { name: "heading", type: "text" },
     { name: "body", type: "richText", required: true, editor },
   ]),
-  design("list", "List", "A heading and points that fly in.", [
+  design("list", "A heading and points that fly in.", [
     { name: "heading", type: "text" },
     {
       name: "items",
@@ -112,6 +130,7 @@ export const DESIGNS: Block[] = [
       required: true,
       minRows: 1,
       labels: { singular: "Point", plural: "Points" },
+      admin: NAMED_ROWS,
       fields: [{ name: "text", type: "text", required: true }],
     },
     {
@@ -121,7 +140,7 @@ export const DESIGNS: Block[] = [
       defaultValue: false,
     },
   ]),
-  design("picture", "Picture", "One picture, framed or filling the slide.", [
+  design("picture", "One picture, framed or filling the slide.", [
     picture(),
     { name: "caption", type: "text" },
     {
@@ -134,29 +153,23 @@ export const DESIGNS: Block[] = [
       ],
     },
   ]),
-  design(
-    "split",
-    "Words + picture",
-    "Words on one side, a picture on the other.",
-    [
-      { name: "heading", type: "text" },
-      { name: "body", type: "richText", editor },
-      picture(),
-      {
-        name: "side",
-        type: "radio",
-        defaultValue: "right",
-        options: [
-          { label: "Picture right", value: "right" },
-          { label: "Picture left", value: "left" },
-        ],
-        admin: { layout: "horizontal" },
-      },
-    ]
-  ),
+  design("split", "Words on one side, a picture on the other.", [
+    { name: "heading", type: "text" },
+    { name: "body", type: "richText", editor },
+    picture(),
+    {
+      name: "side",
+      type: "radio",
+      defaultValue: "right",
+      options: [
+        { label: "Picture right", value: "right" },
+        { label: "Picture left", value: "left" },
+      ],
+      admin: { layout: "horizontal" },
+    },
+  ]),
   design(
     "gallery",
-    "Gallery",
     "A few words and a pile of pictures, flying in one by one.",
     [
       { name: "heading", type: "text" },
@@ -169,6 +182,7 @@ export const DESIGNS: Block[] = [
         maxRows: 12,
         labels: { singular: "Picture", plural: "Pictures" },
         admin: {
+          ...NAMED_ROWS,
           description:
             "They land as polaroids, a little scattered. On the slide a tap brings one up close.",
         },
@@ -186,9 +200,73 @@ export const DESIGNS: Block[] = [
       },
     ]
   ),
-  design("quote", "Quote", "Big words in big quote marks.", [
+  design("quote", "Big words in big quote marks.", [
     { name: "quote", type: "textarea", required: true, admin: { rows: 3 } },
     { name: "author", type: "text" },
   ]),
-  design("blank", "Just stickers", "Nothing but the theme and stickers.", []),
+  design(
+    "card",
+    "A greeting card in its envelope: tap to open, tap to fold it open.",
+    [
+      {
+        type: "collapsible",
+        label: "Envelope",
+        fields: [
+          {
+            name: "to",
+            type: "text",
+            label: "For",
+            admin: {
+              description:
+                "On the envelope – “For Anna” – and inside, “Dear Anna,”.",
+            },
+          },
+          {
+            name: "stamp",
+            type: "upload",
+            relationTo: "media",
+            filterOptions: { mimeType: { contains: "image" } },
+            admin: {
+              description:
+                "The postage stamp in the corner. Empty: the first sticker.",
+            },
+          },
+        ],
+      },
+      {
+        type: "collapsible",
+        label: "Front",
+        fields: [
+          {
+            name: "headline",
+            type: "textarea",
+            admin: {
+              rows: 3,
+              description:
+                "Big words on the front, each line a line. The stickers (tab Stickers) lie on it too.",
+            },
+          },
+        ],
+      },
+      {
+        type: "collapsible",
+        label: "Inside",
+        fields: [
+          {
+            name: "message",
+            type: "textarea",
+            required: true,
+            admin: { rows: 5 },
+          },
+          {
+            name: "from",
+            type: "text",
+            label: "From",
+            admin: { description: "The signature: “Max”." },
+          },
+        ],
+      },
+    ]
+  ),
+  design("blank", "Nothing but the theme and stickers.", []),
 ];

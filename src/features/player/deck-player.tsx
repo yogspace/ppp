@@ -8,9 +8,9 @@ import { useArrange } from "@/features/stickers/use-arrange";
 import type { Move } from "@/features/transitions/frames";
 import { resolveTransition } from "@/features/transitions/kinds";
 import { TransitionCover } from "@/features/transitions/overlay";
-import { Arrows } from "./arrows";
 import { Controls } from "./controls";
 import { SlideFrame } from "./slide-frame";
+import type { Onward } from "./slide-nav";
 import { Stage } from "./stage";
 import {
   backward,
@@ -69,9 +69,9 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
 
 /**
  * A deck, played: one slide at a time on the stage, each coming in with its
- * transition. Never on its own, and never by a stray click: on is the →
- * button, → ↓ space Enter, or a swipe to the left; back the ← button, ← ↑,
- * or a swipe to the right. Home and End, F for full screen, H (or a long
+ * transition. Never on its own, and never by a stray click: on is the
+ * slide's own button (slide-nav.tsx), → ↓ space Enter, or a swipe to the
+ * left; back its ←, ← ↑, or a swipe to the right. Home and End, F for full screen, H (or a long
  * press, or the mouse at the bottom edge) shows the controls, E arranges the
  * stickers (logged in). Every slide
  * has its address (`/talk`, `/talk/1` …): written as it changes, without
@@ -228,6 +228,15 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
 
   const slide = slides[pos.slide];
   if (!slide) return null;
+  // Where the slide's own button leads.
+  const onward: Onward =
+    pos.step < (steps[pos.slide] ?? 0)
+      ? "point"
+      : pos.slide < slides.length - 1
+        ? "next"
+        : slides.length > 1
+          ? "again"
+          : null;
 
   return (
     <MotionProvider>
@@ -253,9 +262,13 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
               <SlideFrame
                 arrangement={arrangement}
                 arranging={arranging}
+                back={pos.slide > 0 || pos.step > 0}
                 key={slide.id}
                 move={move}
                 onArrange={canArrange ? arrange : undefined}
+                onBack={prev}
+                onOn={onward === "again" ? () => to(0) : next}
+                onward={onward}
                 slide={slide}
                 step={pos.step}
               />
@@ -263,15 +276,6 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
             <TransitionCover key={move.n} look={slide.look} move={move} />
           </Stage>
         </main>
-        <Arrows
-          canBack={pos.slide > 0 || pos.step > 0}
-          canOn={
-            pos.slide < slides.length - 1 || pos.step < (steps[pos.slide] ?? 0)
-          }
-          look={slide.look}
-          onBack={prev}
-          onOn={next}
-        />
         <Controls
           arranging={arranging}
           canArrange={canArrange}

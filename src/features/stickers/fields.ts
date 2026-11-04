@@ -32,15 +32,13 @@ export const arrangementField = (): JSONField => ({
   admin: { hidden: true },
 });
 
-type Arrangeable = "decks" | "cards";
-
 /**
- * `POST /api/<collection>/:id/arrange` – `{ sticker, placement }` from the
- * page: one sticker moved (or, with `placement: null`, put back). Admins
- * only; Payload checks the request's origin for the login cookie.
+ * `POST /api/decks/:id/arrange` – `{ sticker, placement }` from the page:
+ * one sticker moved (or, with `placement: null`, put back). Admins only;
+ * Payload checks the request's origin for the login cookie.
  */
 export const arrangeEndpoint = <T extends { arrangement?: unknown }>(
-  collection: Arrangeable,
+  collection: "decks",
   stickerIds: (doc: T) => Set<string>
 ): Endpoint => ({
   path: "/:id/arrange",

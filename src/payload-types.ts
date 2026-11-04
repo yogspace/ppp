@@ -68,7 +68,6 @@ export interface Config {
   blocks: {};
   collections: {
     decks: Deck;
-    cards: Card;
     media: Media;
     themes: Theme;
     users: User;
@@ -80,7 +79,6 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     decks: DecksSelect<false> | DecksSelect<true>;
-    cards: CardsSelect<false> | CardsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     themes: ThemesSelect<false> | ThemesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -124,7 +122,7 @@ export interface UserAuthOperations {
   };
 }
 /**
- * Slides to present. On the page: → / space / a click go on, ← back, F full screen, E arranges the stickers.
+ * Slides to present – or a single Card slide to send. On the page: the slide's own button or → goes on, ← back, H shows the controls, F full screen, E arranges the stickers.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "decks".
@@ -132,9 +130,6 @@ export interface UserAuthOperations {
 export interface Deck {
   id: string;
   title: string;
-  /**
-   * The address: ppp.mxwr.de/<slug>. Made from the title when left empty.
-   */
   slug: string;
   /**
    * Every slide's theme, unless it picks its own.
@@ -185,11 +180,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -237,11 +232,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -299,11 +294,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -351,11 +346,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -400,11 +395,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -464,11 +459,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -535,11 +530,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -583,11 +578,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -620,6 +615,23 @@ export interface Deck {
       }
     | {
         /**
+         * On the envelope – “For Anna” – and inside, “Dear Anna,”.
+         */
+        to?: string | null;
+        /**
+         * The postage stamp in the corner. Empty: the first sticker.
+         */
+        stamp?: (string | null) | Media;
+        /**
+         * Big words on the front, each line a line. The stickers (tab Stickers) lie on it too.
+         */
+        headline?: string | null;
+        message: string;
+        /**
+         * The signature: “Max”.
+         */
+        from?: string | null;
+        /**
          * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
@@ -629,11 +641,57 @@ export interface Deck {
             }[]
           | null;
         /**
-         * This slide's own theme – empty: the deck's.
+         * Empty: the deck's theme.
          */
         theme?: (string | null) | Theme;
         /**
-         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         */
+        transition?:
+          | (
+              | 'swipe'
+              | 'boing'
+              | 'pop'
+              | 'toss'
+              | 'flip'
+              | 'hinge'
+              | 'jelly'
+              | 'zoom'
+              | 'blob'
+              | 'confetti'
+              | 'curtain'
+              | 'fade'
+              | 'cut'
+              | 'spinner'
+              | 'checkerboard'
+              | 'blinds'
+              | 'dissolve'
+              | 'star'
+              | 'heart'
+              | 'clock'
+              | 'surprise'
+            )
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'card';
+      }
+    | {
+        /**
+         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         */
+        stickers?:
+          | {
+              image: string | Media;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Empty: the deck's theme.
+         */
+        theme?: (string | null) | Theme;
+        /**
+         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -678,6 +736,8 @@ export interface Deck {
   createdAt: string;
 }
 /**
+ * Color schemes, fonts and backgrounds – picked by a deck, a slide or a card.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "themes".
  */
@@ -687,9 +747,17 @@ export interface Theme {
   bg: string;
   text: string;
   /**
-   * Bullets, quote marks, the floaties, the speech bubble.
+   * Bullets, quote marks, floaties, the seal.
    */
   accent: string;
+  /**
+   * A card's paper and envelope.
+   */
+  paper: string;
+  /**
+   * The words on it.
+   */
+  paperText: string;
   font: 'grotesk' | 'rounded' | 'serif';
   caps?: boolean | null;
   background: 'plain' | 'lines' | 'dots' | 'floaties' | 'picture';
@@ -697,15 +765,7 @@ export interface Theme {
    * Covers the whole screen. A video plays muted, on a loop. Pick text colors that read on it.
    */
   picture?: (string | null) | Media;
-  /**
-   * A fine film grain over everything.
-   */
   grain?: boolean | null;
-  /**
-   * The card's paper – the page around it takes the background.
-   */
-  paper: string;
-  paperText: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -758,64 +818,6 @@ export interface Media {
       filename?: string | null;
     };
   };
-}
-/**
- * Greeting cards to send. On the page a tap opens the envelope, another the card; logged in, E arranges the stickers.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cards".
- */
-export interface Card {
-  id: string;
-  /**
-   * The browser tab's title, and the address's.
-   */
-  title: string;
-  /**
-   * The address: ppp.mxwr.de/<slug>. Made from the title when left empty.
-   */
-  slug: string;
-  theme?: (string | null) | Theme;
-  /**
-   * Written on the envelope – “For Anna” – and inside, “Dear Anna,”.
-   */
-  to?: string | null;
-  /**
-   * The postage stamp in the envelope's corner. Empty: the first sticker.
-   */
-  stamp?: (string | null) | Media;
-  /**
-   * Big words on the front – each line stays a line. As big as fits.
-   */
-  headline?: string | null;
-  /**
-   * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
-   */
-  stickers?:
-    | {
-        image: string | Media;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Inside – the card folds open with a tap.
-   */
-  message: string;
-  /**
-   * The signature: “Max”.
-   */
-  from?: string | null;
-  arrangement?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -871,10 +873,6 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'decks';
         value: string | Deck;
-      } | null)
-    | ({
-        relationTo: 'cards';
-        value: string | Card;
       } | null)
     | ({
         relationTo: 'media';
@@ -1088,6 +1086,25 @@ export interface DecksSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        card?:
+          | T
+          | {
+              to?: T;
+              stamp?: T;
+              headline?: T;
+              message?: T;
+              from?: T;
+              stickers?:
+                | T
+                | {
+                    image?: T;
+                    id?: T;
+                  };
+              theme?: T;
+              transition?: T;
+              id?: T;
+              blockName?: T;
+            };
         blank?:
           | T
           | {
@@ -1103,29 +1120,6 @@ export interface DecksSelect<T extends boolean = true> {
               blockName?: T;
             };
       };
-  arrangement?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cards_select".
- */
-export interface CardsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  theme?: T;
-  to?: T;
-  stamp?: T;
-  headline?: T;
-  stickers?:
-    | T
-    | {
-        image?: T;
-        id?: T;
-      };
-  message?: T;
-  from?: T;
   arrangement?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1191,13 +1185,13 @@ export interface ThemesSelect<T extends boolean = true> {
   bg?: T;
   text?: T;
   accent?: T;
+  paper?: T;
+  paperText?: T;
   font?: T;
   caps?: T;
   background?: T;
   picture?: T;
   grain?: T;
-  paper?: T;
-  paperText?: T;
   updatedAt?: T;
   createdAt?: T;
 }

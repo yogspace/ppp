@@ -7,13 +7,18 @@ import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
 import { BOUNCY, Enter, EnterDelay, useFit, Words } from "./enter";
 import { Rich } from "./rich";
+import { useStageSize } from "./stage";
 import type { SlideData } from "./types";
 
 /**
- * A slide's words and pictures, by its design – in cqw throughout, so the
- * slide looks the same at any size. The stickers lie over it
+ * A slide's words and pictures, by its design – in the stage's units
+ * (cqmin: a 16:9 stage's cqw × 16/9), so a slide looks the same at any size
+ * and grows its words on a phone held upright, where things stack (`tall`). The stickers lie over it
  * (slide-frame.tsx).
  */
+
+/** A 16:9 stage's cqw in cqmin – the same there, larger when upright. */
+const CQ = 16 / 9;
 
 type Of<D extends SlideData["design"]> = Extract<SlideData, { design: D }>;
 
@@ -32,7 +37,7 @@ const Poster = ({ slide }: { slide: Of<"poster"> }) => {
   return (
     <div
       className={cn(
-        "absolute inset-x-[6cqw] inset-y-[5.5cqw] flex flex-col justify-center",
+        "absolute inset-x-[10.667cqmin] inset-y-[9.778cqmin] flex flex-col justify-center",
         ALIGN[slide.align]
       )}
     >
@@ -57,7 +62,7 @@ const Poster = ({ slide }: { slide: Of<"poster"> }) => {
 const Pill = ({ text, accent }: { text: string; accent: string }) => (
   <Enter
     bouncy
-    className="copy rounded-full px-[1.6cqw] py-[0.55cqw] text-[1.9cqw] font-semibold"
+    className="copy rounded-full px-[2.844cqmin] py-[0.978cqmin] text-[3.378cqmin] font-semibold"
     kind="pop"
     style={{
       background: accent,
@@ -71,9 +76,9 @@ const Pill = ({ text, accent }: { text: string; accent: string }) => (
 const Cover = ({ slide }: { slide: Of<"cover"> }) => {
   const fit = useFit(slide.title, { max: 14 });
   return (
-    <div className="absolute inset-x-[7cqw] inset-y-[6cqw] flex flex-col items-center justify-center gap-[2.2cqw] text-center">
+    <div className="absolute inset-x-[12.444cqmin] inset-y-[10.667cqmin] flex flex-col items-center justify-center gap-[3.911cqmin] text-center">
       {slide.kicker && <Pill accent={slide.look.accent} text={slide.kicker} />}
-      <div className="flex max-h-[30cqw] min-h-0 w-full flex-1 items-center justify-center">
+      <div className="flex max-h-[53.333cqmin] min-h-0 w-full flex-1 items-center justify-center">
         <div
           className="headline w-max whitespace-pre"
           ref={fit.ref}
@@ -84,7 +89,7 @@ const Cover = ({ slide }: { slide: Of<"cover"> }) => {
       </div>
       {slide.subtitle && (
         <Enter
-          className="copy max-w-[60cqw] text-[2.4cqw] whitespace-pre-line opacity-75"
+          className="copy max-w-[106.667cqmin] text-[4.267cqmin] whitespace-pre-line opacity-75"
           delay={0.5}
         >
           {slide.subtitle}
@@ -95,19 +100,19 @@ const Cover = ({ slide }: { slide: Of<"cover"> }) => {
 };
 
 const Heading = ({ text, size = 5.4 }: { text: string; size?: number }) => (
-  <h2 className="headline" style={{ fontSize: `${size}cqw` }}>
+  <h2 className="headline" style={{ fontSize: `${size * CQ}cqmin` }}>
     <Words gap={0.05} text={text} />
   </h2>
 );
 
 const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
-  <div className="absolute inset-x-[8cqw] inset-y-[6cqw] flex flex-col justify-center gap-[2.6cqw]">
+  <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.622cqmin]">
     {slide.heading && <Heading text={slide.heading} />}
     {slide.body && (
       <Enter delay={0.3}>
         <Rich
           body={slide.body}
-          className="copy rich max-w-[68cqw] text-[2.5cqw]"
+          className="copy rich max-w-[120.889cqmin] text-[4.444cqmin]"
         />
       </Enter>
     )}
@@ -115,13 +120,13 @@ const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
 );
 
 const List = ({ slide, step }: { slide: Of<"list">; step: number }) => (
-  <div className="absolute inset-x-[8cqw] inset-y-[6cqw] flex flex-col justify-center gap-[2.8cqw]">
+  <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.978cqmin]">
     {slide.heading && <Heading text={slide.heading} />}
-    <ul className="copy flex flex-col gap-[1.3cqw] text-[2.8cqw]">
+    <ul className="copy flex flex-col gap-[2.311cqmin] text-[4.978cqmin]">
       {slide.items.map((item, i) => (
         <Enter
           as="li"
-          className="flex items-baseline gap-[1.4cqw]"
+          className="flex items-baseline gap-[2.489cqmin]"
           delay={slide.stepwise ? 0 : 0.3 + i * 0.12}
           key={`${i}-${item}`}
           kind="left"
@@ -142,11 +147,27 @@ const List = ({ slide, step }: { slide: Of<"list">; step: number }) => (
   </div>
 );
 
-/** A picture, its own size kept within `w` × `h` (cqw). */
-const fitBox = (picture: Picture, w: number, h: number) => {
+/**
+ * “1.778cqmin” of a 16:9 stage, whatever the stage: on a wide one its width's
+ * hundredth, on an upright one larger – the shorter side decides.
+ */
+const unitOf = (width: number, height: number) =>
+  Math.min(width, height) / 56.25;
+
+/**
+ * A picture's box (px), its own shape kept, within a share of the stage –
+ * `wide` on a wide one, `tall` on an upright one: [width, height] shares.
+ */
+const useFitBox = (
+  picture: Picture,
+  wide: [number, number],
+  tall: [number, number]
+) => {
+  const { width, height } = useStageSize();
+  const [w, h] = height > width ? tall : wide;
   const aspect = picture.width / picture.height || 1;
-  const width = Math.min(w, h * aspect);
-  return { width: `${width}cqw`, height: `${width / aspect}cqw` };
+  const boxW = Math.min(width * w, height * h * aspect);
+  return { width: boxW, height: boxW / aspect };
 };
 
 const Media = ({
@@ -196,7 +217,7 @@ const PictureSlide = ({ slide }: { slide: Of<"picture"> }) => {
         {slide.caption && (
           <Enter
             bouncy
-            className="copy absolute bottom-[3cqw] left-[3cqw] rounded-full bg-(--paper) px-[1.6cqw] py-[0.6cqw] text-[1.8cqw] text-(--paper-ink)"
+            className="copy absolute bottom-[5.333cqmin] left-[5.333cqmin] rounded-full bg-(--paper) px-[2.844cqmin] py-[1.067cqmin] text-[3.2cqmin] text-(--paper-ink)"
             delay={0.6}
             kind="pop"
           >
@@ -207,54 +228,75 @@ const PictureSlide = ({ slide }: { slide: Of<"picture"> }) => {
     );
   }
   // Framed: a little polaroid, flying in from the side, landing tilted.
+  return <Framed caption={slide.caption} image={image} />;
+};
+
+const Framed = ({ image, caption }: { image: Picture; caption: string }) => {
+  const base = useContext(EnterDelay);
+  const box = useFitBox(
+    image,
+    [0.76, caption ? 0.67 : 0.74],
+    [0.86, caption ? 0.58 : 0.64]
+  );
   return (
     <div className="absolute inset-0 grid place-items-center">
       <m.figure
-        animate={{ x: "0cqw", rotate: -2.5, opacity: 1 }}
-        className="rounded-[0.6cqw] bg-white p-[1cqw] pb-[0.4cqw] shadow-[0_1.2cqw_3cqw_-1cqw_rgb(0_0_0/0.4)]"
-        initial={{ x: "70cqw", rotate: 24, opacity: 0 }}
+        animate={{ x: "0cqmin", rotate: -2.5, opacity: 1 }}
+        className="rounded-[1.067cqmin] bg-white p-[1.778cqmin] pb-[0.711cqmin] shadow-[0_1.3.556cqmin_3cqw_-1.778cqmin_rgb(0_0_0/0.4)]"
+        initial={{ x: "124.444cqmin", rotate: 24, opacity: 0 }}
         transition={{
           default: { type: "spring", stiffness: 160, damping: 15, delay: base },
           opacity: { duration: 0.2, delay: base },
         }}
       >
         <Media
-          className="block rounded-[0.2cqw] object-cover"
+          className="block rounded-[0.356cqmin] object-cover"
           picture={image}
-          style={fitBox(image, 76, slide.caption ? 38 : 42)}
+          style={box}
         />
-        <figcaption className="copy min-h-[1.2cqw] py-[0.9cqw] text-center text-[1.9cqw] text-neutral-800">
-          {slide.caption}
+        <figcaption className="copy min-h-[2.133cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] text-neutral-800">
+          {caption}
         </figcaption>
       </m.figure>
     </div>
   );
 };
 
+/** Words + picture's picture: beside the words, or upright below them. */
+const useSplitBox = (picture: Picture | null) => {
+  const box = useFitBox(
+    picture ?? { src: "", width: 1, height: 1, alt: "", video: false },
+    [0.4, 0.78],
+    [0.84, 0.38]
+  );
+  return picture ? box : null;
+};
+
 const Split = ({ slide }: { slide: Of<"split"> }) => {
   const base = useContext(EnterDelay);
   const left = slide.side === "left";
+  const box = useSplitBox(slide.image);
   return (
     <div
       className={cn(
-        "absolute inset-x-[6cqw] inset-y-[5cqw] flex items-center gap-[5cqw]",
-        left && "flex-row-reverse"
+        "absolute inset-x-[10.667cqmin] inset-y-[8.889cqmin] flex items-center gap-[8.889cqmin] tall:flex-col tall:justify-center",
+        left && "flex-row-reverse tall:flex-col-reverse"
       )}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-[2.2cqw]">
+      <div className="flex min-w-0 flex-1 flex-col gap-[3.911cqmin] tall:w-full tall:flex-none">
         {slide.heading && <Heading size={4.6} text={slide.heading} />}
         {slide.body && (
           <Enter delay={0.3}>
-            <Rich body={slide.body} className="copy rich text-[2.2cqw]" />
+            <Rich body={slide.body} className="copy rich text-[3.911cqmin]" />
           </Enter>
         )}
       </div>
       {slide.image && (
         <m.div
-          animate={{ x: "0cqw", rotate: left ? -2 : 2, opacity: 1 }}
+          animate={{ x: "0cqmin", rotate: left ? -2 : 2, opacity: 1 }}
           className="flex-none"
           initial={{
-            x: left ? "-50cqw" : "50cqw",
+            x: left ? "-88.889cqmin" : "88.889cqmin",
             rotate: left ? -20 : 20,
             opacity: 0,
           }}
@@ -269,9 +311,9 @@ const Split = ({ slide }: { slide: Of<"split"> }) => {
           }}
         >
           <Media
-            className="block rounded-[1.6cqw] object-cover shadow-[0_1.2cqw_3cqw_-1cqw_rgb(0_0_0/0.35)]"
+            className="block rounded-[2.844cqmin] object-cover shadow-[0_1.3.556cqmin_3cqw_-1.778cqmin_rgb(0_0_0/0.35)]"
             picture={slide.image}
-            style={fitBox(slide.image, 40, 44)}
+            style={box ?? undefined}
           />
         </m.div>
       )}
@@ -310,40 +352,45 @@ export const pileSpots = (count: number, width: number, height: number) => {
 const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
   const base = useContext(EnterDelay);
   const [near, setNear] = useState<number | null>(null);
+  const { width: stageW, height: stageH } = useStageSize();
+  const tall = stageH > stageW;
+  const u = unitOf(stageW, stageH);
   const words = Boolean(slide.heading || slide.body);
   const left = slide.side === "left";
-  // The pile's room (cqw).
-  const width = words ? 52 : 86;
-  const height = 45;
+  // The pile's room (px): beside the words, or – upright – below them.
+  const width = stageW * (tall ? 0.88 : words ? 0.52 : 0.86);
+  const height = stageH * (tall ? (words ? 0.52 : 0.78) : 0.8);
   const spots = pileSpots(slide.pictures.length, width, height);
   return (
     <div
       className={cn(
-        "absolute inset-x-[6cqw] inset-y-[5.5cqw] flex items-center gap-[4cqw]",
-        left && "flex-row-reverse"
+        "absolute inset-x-[10.667cqmin] inset-y-[9.778cqmin] flex items-center gap-[7.111cqmin] tall:flex-col tall:justify-center",
+        left && "flex-row-reverse tall:flex-col-reverse"
       )}
     >
       {words && (
-        <div className="flex min-w-0 flex-1 flex-col gap-[2cqw]">
+        <div className="flex min-w-0 flex-1 flex-col gap-[3.556cqmin] tall:w-full tall:flex-none">
           {slide.heading && <Heading size={4.4} text={slide.heading} />}
           {slide.body && (
             <Enter delay={0.3}>
-              <Rich body={slide.body} className="copy rich text-[2.1cqw]" />
+              <Rich body={slide.body} className="copy rich text-[3.733cqmin]" />
             </Enter>
           )}
         </div>
       )}
-      <div
-        className="relative flex-none"
-        style={{ width: `${width}cqw`, height: `${height}cqw` }}
-      >
+      <div className="relative flex-none" style={{ width, height }}>
         {slide.pictures.map(({ picture, caption }, i) => {
           const spot = spots[i];
           const aspect = picture.width / picture.height || 1;
-          // The photo within its cell, the frame around it.
-          const photoW = Math.min(spot.w - 1.6, (spot.h - 4) * aspect);
-          const frameW = photoW + 1.4;
-          const frameH = photoW / aspect + 4;
+          // The photo within its cell, the frame around it (px).
+          const pad = 0.7 * u;
+          const foot = 3.3 * u;
+          const photoW = Math.min(
+            spot.w - 2 * pad,
+            (spot.h - foot - pad) * aspect
+          );
+          const frameW = photoW + 2 * pad;
+          const frameH = photoW / aspect + pad + foot;
           const close = near === i;
           const zoom = Math.min(
             (width * 0.86) / frameW,
@@ -352,8 +399,8 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
           return (
             <m.button
               animate={{
-                x: close ? `${width / 2 - spot.x}cqw` : "0cqw",
-                y: close ? `${height / 2 - spot.y}cqw` : "0cqw",
+                x: close ? width / 2 - spot.x : 0,
+                y: close ? height / 2 - spot.y : 0,
                 rotate: close ? 0 : spot.r,
                 scale: close ? zoom : 1,
                 opacity: 1,
@@ -364,19 +411,20 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
                   : `Show ${picture.alt || "the picture"} up close`
               }
               aria-pressed={close}
-              className="absolute block cursor-zoom-in rounded-[0.4cqw] bg-white p-[0.7cqw] pb-0 shadow-[0_0.8cqw_1.8cqw_-0.6cqw_rgb(0_0_0/0.4)] aria-pressed:cursor-zoom-out"
+              className="absolute block cursor-zoom-in rounded-[0.711cqmin] bg-white pb-0 shadow-[0_0.14.222cqmin_1.14.222cqmin_-1.067cqmin_rgb(0_0_0/0.4)] aria-pressed:cursor-zoom-out"
               initial={{
-                x: left ? "-60cqw" : "60cqw",
-                y: "20cqw",
+                x: (left ? -0.6 : 0.6) * stageW,
+                y: 0.35 * stageH,
                 rotate: spot.r * 4,
                 opacity: 0,
               }}
               key={`${i}-${picture.src}`}
               onClick={() => setNear(close ? null : i)}
               style={{
-                left: `${spot.x - frameW / 2}cqw`,
-                top: `${spot.y - frameH / 2}cqw`,
-                width: `${frameW}cqw`,
+                left: spot.x - frameW / 2,
+                top: spot.y - frameH / 2,
+                width: frameW,
+                padding: `${pad}px ${pad}px 0`,
                 zIndex: close ? 30 : i,
               }}
               transition={{
@@ -391,11 +439,18 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
               type="button"
             >
               <Media
-                className="block w-full rounded-[0.2cqw] object-cover"
+                className="block w-full rounded-[0.356cqmin] object-cover"
                 picture={picture}
                 style={{ aspectRatio: `${aspect}` }}
               />
-              <span className="copy block h-[3.3cqw] truncate px-[0.4cqw] pt-[0.5cqw] text-center text-[1.3cqw] text-neutral-800">
+              <span
+                className="copy block truncate px-[0.711cqmin] text-center text-neutral-800"
+                style={{
+                  height: foot,
+                  paddingTop: 0.5 * u,
+                  fontSize: Math.max(11, 1.3 * u),
+                }}
+              >
                 {caption}
               </span>
             </m.button>
@@ -409,10 +464,10 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
 const Quote = ({ slide }: { slide: Of<"quote"> }) => {
   const fit = useFit(slide.quote, { max: 7, wrap: true });
   return (
-    <div className="absolute inset-x-[10cqw] inset-y-[6cqw] flex flex-col justify-center">
+    <div className="absolute inset-x-[17.778cqmin] inset-y-[10.667cqmin] flex flex-col justify-center">
       <Enter
         bouncy
-        className="headline -mb-[4cqw] -ml-[2cqw] text-[18cqw] leading-none"
+        className="headline -mb-[7.111cqmin] -ml-[3.556cqmin] text-[32cqmin] leading-none"
         kind="pop"
         style={{ color: "var(--accent)", textTransform: "none" }}
       >
@@ -428,7 +483,10 @@ const Quote = ({ slide }: { slide: Of<"quote"> }) => {
         </div>
       </div>
       {slide.author && (
-        <Enter className="copy mt-[2cqw] text-[2.2cqw] opacity-75" delay={0.7}>
+        <Enter
+          className="copy mt-[3.556cqmin] text-[3.911cqmin] opacity-75"
+          delay={0.7}
+        >
           — {slide.author}
         </Enter>
       )}

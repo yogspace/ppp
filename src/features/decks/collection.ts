@@ -39,9 +39,10 @@ export const Decks: CollectionConfig = {
   admin: {
     group: "Content",
     useAsTitle: "title",
+    listSearchableFields: ["title", "slug"],
     defaultColumns: ["title", "slug", "updatedAt"],
     description:
-      "Slides to present. On the page: → / space / a click go on, ← back, F full screen, E arranges the stickers.",
+      "Slides to present – or a single Card slide to send. On the page: the slide's own button or → goes on, ← back, H shows the controls, F full screen, E arranges the stickers.",
     preview: (doc) => address(doc?.slug),
     livePreview: { url: ({ data }) => address(data?.slug) ?? serverUrl() },
   },
@@ -49,7 +50,7 @@ export const Decks: CollectionConfig = {
   endpoints: [arrangeEndpoint<Deck>("decks", deckStickerIds)],
   fields: [
     { name: "title", type: "text", required: true },
-    slugField("decks"),
+    slugField(),
     {
       name: "theme",
       type: "relationship",

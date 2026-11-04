@@ -17,9 +17,11 @@ const StageSize = createContext<Size>({ width: 0, height: 0 });
 export const useStageSize = () => useContext(StageSize);
 
 /**
- * The 16:9 stage, as big as the screen allows, in its middle. Its width is
- * the unit of everything on it (cqw). What it holds is drawn once it is
- * measured – in the browser, never on the server.
+ * The stage: 16:9, as big as the screen allows, in its middle – on a screen
+ * held upright (a phone) the whole screen instead. A size container named
+ * `stage`: what is on it is measured in its units (cqmin, cqw, cqh), and the
+ * `tall` variant lays things out for the upright one. What it holds is
+ * drawn once it is measured – in the browser, never on the server.
  */
 export const Stage = ({ children }: { children: ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -36,7 +38,7 @@ export const Stage = ({ children }: { children: ReactNode }) => {
   }, []);
   return (
     <div
-      className="relative aspect-video w-[min(100vw,177.78dvh)] overflow-hidden [container-type:inline-size]"
+      className="relative aspect-video w-[min(100vw,177.78dvh)] overflow-hidden [container:stage/size] portrait:aspect-auto portrait:h-dvh portrait:w-screen"
       ref={ref}
     >
       <StageSize.Provider value={size}>

@@ -57,6 +57,17 @@ export type SlideData = SlideBase &
         side: "left" | "right";
       }
     | { design: "quote"; quote: string; author: string }
+    | {
+        design: "card";
+        to: string;
+        /** The postage stamp – its own, else the first sticker's picture. */
+        stamp: Picture | null;
+        /** The postmark's date: “4 NOV 2026”. */
+        posted: string;
+        headline: string;
+        message: string;
+        from: string;
+      }
     | { design: "blank" }
   );
 
@@ -68,21 +79,5 @@ export type DeckData = {
   title: string;
   transition: TransitionChoice;
   slides: SlideData[];
-  arrangement: Arrangement;
-};
-
-export type CardData = {
-  id: string;
-  title: string;
-  look: ThemeLook;
-  to: string;
-  from: string;
-  headline: string;
-  message: string;
-  /** The postage stamp – its own, else the first sticker's picture. */
-  stamp: Picture | null;
-  /** The postmark's date: “4 NOV 2026”. */
-  posted: string;
-  stickers: StickerData[];
   arrangement: Arrangement;
 };

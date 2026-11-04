@@ -6,12 +6,12 @@ import type { Arrangement, Placement } from "./arrangement";
 export type SaveState = "idle" | "saving" | "saved" | "failed";
 
 /**
- * Arranging a deck's or card's stickers on the page: the arrangement as it
+ * Arranging a deck's stickers on the page: the arrangement as it
  * stands here (so a slide shown again keeps it), each move sent to the
  * arrange endpoint – a sticker's moves in quick succession as one.
  */
 export const useArrange = (
-  collection: "decks" | "cards",
+  collection: "decks",
   id: string,
   initial: Arrangement
 ) => {

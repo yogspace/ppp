@@ -14,6 +14,8 @@ type Props = {
   hidden?: boolean;
   /** Seconds before they fly in, one after another. */
   delay?: number;
+  /** Bigger than placed (a phone held upright) – where they sit stays. */
+  scale?: number;
   onArrange?: (id: string, placement: Placement | null) => void;
 };
 
@@ -28,6 +30,7 @@ export const StickerLayer = ({
   arranging = false,
   hidden = false,
   delay = 0.4,
+  scale = 1,
   onArrange,
 }: Props) => {
   const layerRef = useRef<HTMLDivElement>(null);
@@ -43,6 +46,7 @@ export const StickerLayer = ({
           key={sticker.id}
           layerRef={layerRef}
           onArrange={onArrange}
+          scale={scale}
           size={size}
           sticker={sticker}
           stored={arrangement[sticker.id] ?? null}
