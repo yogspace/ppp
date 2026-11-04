@@ -35,7 +35,12 @@ export const ShareField = () => {
   useEffect(() => {
     if (!url) return;
     let on = true;
-    QRCode.toDataURL(url, { width: 512, margin: 2 })
+    // Transparent around the dark squares: it goes on any background.
+    QRCode.toDataURL(url, {
+      width: 512,
+      margin: 2,
+      color: { dark: "#000000ff", light: "#00000000" },
+    })
       .then((png) => on && setCode(png))
       .catch(() => undefined);
     return () => {
@@ -120,6 +125,8 @@ export const ShareField = () => {
               width: 80,
               height: 80,
               imageRendering: "pixelated",
+              // Shown on white – the dark admin would swallow it.
+              background: "#ffffff",
               borderRadius: 4,
               flexShrink: 0,
             }}

@@ -138,6 +138,8 @@ export const Sticker = ({
   flatRef.current = flat;
   // Where it can be grabbed: its die-cut outline, not its box.
   const [hit, setHit] = useState<CSSProperties | null>(null);
+  // The flat one, cut out like the 3D one – while its slide moves.
+  const [cut, setCut] = useState<StickerArt | null>(null);
   useEffect(() => {
     if (!stage.ready) return;
     let remove: (() => void) | null = null;
@@ -170,6 +172,7 @@ export const Sticker = ({
       .then((art) => {
         if (!on) return;
         setHit(hitArea(art, aspect));
+        if (art.flat) setCut(art);
         const box = boxRef.current;
         if (box) remove = stage.add(art, read, box);
         if (remove) setDrawn(true);
@@ -383,13 +386,27 @@ export const Sticker = ({
           delay: hidden ? 0 : delay + index * 0.09,
         }}
       >
-        <img
-          alt={picture.alt}
-          className="sticker-flat size-full"
-          draggable={false}
-          src={picture.src}
-          style={{ opacity: drawn && !flat ? 0 : 1 }}
-        />
+        {cut ? (
+          <img
+            alt={picture.alt}
+            className="sticker-cut absolute top-1/2 left-1/2 max-w-none -translate-1/2"
+            draggable={false}
+            src={cut.flat}
+            style={{
+              width: `${100 / cut.pictureShare}%`,
+              height: `${100 * cut.faceHeight}%`,
+              opacity: drawn && !flat ? 0 : 1,
+            }}
+          />
+        ) : (
+          <img
+            alt={picture.alt}
+            className="sticker-flat size-full"
+            draggable={false}
+            src={picture.src}
+            style={{ opacity: drawn && !flat ? 0 : 1 }}
+          />
+        )}
         {/* What can be grabbed: the outline once it is traced, the box
             until then. */}
         <div

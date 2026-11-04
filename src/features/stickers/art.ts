@@ -18,7 +18,17 @@ export type StickerArt = {
   shadowScale: number;
   /** The picture's width as a share of the face's. */
   pictureShare: number;
+  /** The face's height as a share of the picture's. */
+  faceHeight: number;
+  /**
+   * The sticker flat, cut out along its outline (white rim, the picture in
+   * it), as big as the face – a PNG's address, for while its slide moves.
+   */
+  flat: string;
 };
+
+/** The flat sticker is drawn at most this big (longer side, px). */
+const FLAT = 512;
 
 /** The white rim, as a share of the picture's longer side. */
 const RIM = 0.06;
@@ -131,6 +141,21 @@ const make = async (src: string): Promise<StickerArt> => {
   fctx.imageSmoothingQuality = "high";
   fctx.drawImage(image, pad * kf, pad * kf, iw * kf, ih * kf);
 
+  // Flat: the grown shape in white, the picture on it.
+  const kc = Math.min(FLAT / Math.max(fw, fh), 1);
+  const cut = canvas(fw * kc, fh * kc);
+  const cctx = context(cut);
+  drawGrown(cctx, image, pad * kc, pad * kc, iw * kc, ih * kc, long * RIM * kc);
+  cctx.globalCompositeOperation = "source-in";
+  cctx.fillStyle = "#ffffff";
+  cctx.fillRect(0, 0, cut.width, cut.height);
+  cctx.globalCompositeOperation = "source-over";
+  cctx.imageSmoothingQuality = "high";
+  cctx.drawImage(image, pad * kc, pad * kc, iw * kc, ih * kc);
+  const flat = await new Promise<string>((resolve) =>
+    cut.toBlob((blob) => resolve(blob ? URL.createObjectURL(blob) : ""))
+  );
+
   // The shadow: the grown shape in black, a little bigger canvas, softened.
   const shadow = canvas(mask.width * SHADOW_SCALE, mask.height * SHADOW_SCALE);
   const sctx = context(shadow);
@@ -150,6 +175,8 @@ const make = async (src: string): Promise<StickerArt> => {
     shadow: soften(shadow, 3),
     shadowScale: SHADOW_SCALE,
     pictureShare: iw / fw,
+    faceHeight: fh / ih,
+    flat,
   };
 };
 
