@@ -82,6 +82,8 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const steps = useMemo(() => slides.map(stepsOf), [slides]);
   const [pos, setPos] = useState<Pos>({ slide: start, step: 0 });
   const posRef = useRef(pos);
+  // How far the deck got: every slide before it was seen already.
+  const [furthest, setFurthest] = useState(start);
   const [move, setMove] = useState<Move>({ kind: "fade", dir: 1, n: 0 });
   const [arranging, setArranging] = useState(false);
   const [controls, setControls] = useControlsShown();
@@ -111,6 +113,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       }
       posRef.current = next;
       setPos(next);
+      setFurthest((f) => Math.max(f, next.slide));
     },
     [slides, deck.transition, deck.slug]
   );
@@ -269,6 +272,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                 onBack={prev}
                 onOn={onward === "again" ? () => to(0) : next}
                 onward={onward}
+                seen={pos.slide < furthest}
                 slide={slide}
                 step={pos.step}
               />

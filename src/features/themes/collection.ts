@@ -39,7 +39,7 @@ export const Themes: CollectionConfig = {
     useAsTitle: "name",
     defaultColumns: ["name", "background", "font", "updatedAt"],
     description:
-      "Color schemes, fonts and backgrounds – picked by a deck, a slide or a card.",
+      "Color schemes, fonts and backgrounds – picked by a deck or a single slide.",
   },
   fields: [
     { name: "name", type: "text", required: true },

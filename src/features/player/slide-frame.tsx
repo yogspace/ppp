@@ -17,6 +17,7 @@ import { EnterDelay } from "./enter";
 import { type Onward, SlideNav } from "./slide-nav";
 import { SlideView } from "./slide-view";
 import { useStageSize } from "./stage";
+import { stepsOf } from "./steps";
 import type { SlideData } from "./types";
 
 type Props = {
@@ -29,6 +30,8 @@ type Props = {
   onArrange?: (id: string, placement: Placement | null) => void;
   /** Its button's way on, and whether there is a way back. */
   onward: Onward;
+  /** Been here before (the deck went past it): its buttons show at once. */
+  seen: boolean;
   back: boolean;
   onOn: () => void;
   onBack: () => void;
@@ -51,13 +54,22 @@ export const SlideFrame = ({
   arranging,
   onArrange,
   onward,
+  seen,
   back,
   onOn,
   onBack,
 }: Props) => {
   const [own] = useState(move);
-  // A Card's way on shows once it was opened – it wants to be played with.
-  const [opened, setOpened] = useState(slide.design !== "card");
+  // A slide that wants to be played with – a List point by point, a stack
+  // thrown away, a Card opened – shows its ways on and back once that is
+  // done, and keeps them then.
+  const steps = stepsOf(slide);
+  const [done, setDone] = useState(
+    seen || (slide.design !== "card" && steps === 0)
+  );
+  useEffect(() => {
+    if (steps > 0 && step >= steps) setDone(true);
+  }, [step, steps]);
   const spec = specOf(own.kind);
   const { width, height } = useStageSize();
   const progress = useMotionValue(spec.reveal ? 0 : 1);
@@ -92,7 +104,7 @@ export const SlideFrame = ({
             arrangement={arrangement}
             arranging={arranging}
             onArrange={onArrange}
-            onOpened={() => setOpened(true)}
+            onOpened={() => setDone(true)}
             slide={slide}
           />
         ) : (
@@ -110,13 +122,13 @@ export const SlideFrame = ({
         )}
         <SlideNav
           back={back}
-          delay={spec.settle}
+          delay={seen ? spec.settle - 0.6 : spec.settle}
           look={slide.look}
           onBack={onBack}
           onOn={onOn}
           onward={onward}
           point={slide.design === "gallery" ? "next picture" : "next point"}
-          ready={opened}
+          ready={done}
         />
       </EnterDelay.Provider>
     </m.section>

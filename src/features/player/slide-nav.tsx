@@ -23,7 +23,10 @@ type Props = {
   /** What a step of this slide is called: “next point”, “next picture”. */
   point: string;
   back: boolean;
-  /** Its things are in: the button may come – a Card's once it is open. */
+  /**
+   * The slide was played through – its points shown, its stack thrown, its
+   * Card opened: the buttons may come (and stay).
+   */
   ready: boolean;
   /** Seconds after the slide arrived. */
   delay: number;
@@ -57,7 +60,7 @@ export const SlideNav = ({
     >
       <span>
         <AnimatePresence>
-          {back && (
+          {back && ready && (
             <m.button
               animate={{ scale: 1, opacity: 1 }}
               aria-label="Back"

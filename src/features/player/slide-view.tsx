@@ -119,36 +119,73 @@ const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
   </div>
 );
 
-const List = ({ slide, step }: { slide: Of<"list">; step: number }) => (
-  <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.978cqmin]">
-    {slide.heading && <Heading text={slide.heading} />}
-    <ul className="copy flex flex-col gap-[2.311cqmin] text-[4.978cqmin]">
-      {slide.items.map((item, i) => (
-        <Enter
-          as="li"
-          className="flex items-baseline gap-[2.489cqmin]"
-          delay={slide.stepwise ? 0 : 0.3 + i * 0.12}
-          key={`${i}-${item}`}
-          kind="left"
-          shown={!slide.stepwise || step > i}
-        >
-          <m.i
-            animate={{ scale: 1, rotate: 0 }}
-            aria-hidden
-            className="relative top-[-0.12em] block size-[0.55em] flex-none rounded-full"
-            initial={{ scale: 0, rotate: -90 }}
-            style={{ background: "var(--accent)" }}
-            transition={{ ...BOUNCY, delay: 0.1 }}
-          />
-          <span>{item}</span>
-        </Enter>
-      ))}
-    </ul>
-  </div>
-);
+const List = ({
+  slide,
+  step,
+  onForward,
+}: {
+  slide: Of<"list">;
+  step: number;
+  onForward: () => void;
+}) => {
+  // One point per tap: the list itself is the button, a dot pulses where
+  // the next point lands.
+  const waiting = slide.stepwise && step < slide.items.length;
+  return (
+    <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.978cqmin]">
+      {slide.heading && <Heading text={slide.heading} />}
+      <ul className="copy flex flex-col gap-[2.311cqmin] text-[4.978cqmin]">
+        {slide.items.map((item, i) => {
+          const shown = !slide.stepwise || step > i;
+          return (
+            <li className="relative" key={`${i}-${item}`}>
+              {waiting && i === step && (
+                <m.i
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.9, 0.3, 0.9] }}
+                  aria-hidden
+                  className="absolute top-[0.45em] left-0 block size-[0.55em] rounded-full"
+                  style={{ background: "var(--accent)" }}
+                  transition={{
+                    duration: 1.4,
+                    repeat: Number.POSITIVE_INFINITY,
+                    ease: "easeInOut",
+                  }}
+                />
+              )}
+              <Enter
+                className="flex items-baseline gap-[2.489cqmin]"
+                delay={slide.stepwise ? 0 : 0.3 + i * 0.12}
+                kind="left"
+                shown={shown}
+              >
+                <m.i
+                  animate={{ scale: 1, rotate: 0 }}
+                  aria-hidden
+                  className="relative top-[-0.12em] block size-[0.55em] flex-none rounded-full"
+                  initial={{ scale: 0, rotate: -90 }}
+                  style={{ background: "var(--accent)" }}
+                  transition={{ ...BOUNCY, delay: 0.1 }}
+                />
+                <span>{item}</span>
+              </Enter>
+            </li>
+          );
+        })}
+      </ul>
+      {waiting && (
+        <button
+          aria-label="Show the next point"
+          className="absolute -inset-[3cqmin] cursor-pointer rounded-[3cqmin]"
+          onClick={onForward}
+          type="button"
+        />
+      )}
+    </div>
+  );
+};
 
 /**
- * “1.778cqmin” of a 16:9 stage, whatever the stage: on a wide one its width's
+ * “1cqw” of a 16:9 stage, whatever the stage: on a wide one its width's
  * hundredth, on an upright one larger – the shorter side decides.
  */
 const unitOf = (width: number, height: number) =>
@@ -494,7 +531,7 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
   const words = Boolean(slide.heading || slide.body);
   const left = slide.side === "left";
   // The pile's room (px): beside the words, or – upright – below them.
-  const width = stageW * (tall ? 0.88 : words ? 0.52 : 0.86);
+  const width = stageW * (tall ? 0.8 : words ? 0.52 : 0.86);
   const height = stageH * (tall ? (words ? 0.52 : 0.78) : 0.8);
   const spots = pileSpots(slide.pictures.length, width, height);
   return (
@@ -648,7 +685,7 @@ export const SlideView = ({
     case "words":
       return <WordsSlide slide={slide} />;
     case "list":
-      return <List slide={slide} step={step} />;
+      return <List onForward={onForward} slide={slide} step={step} />;
     case "picture":
       return <PictureSlide slide={slide} />;
     case "split":
