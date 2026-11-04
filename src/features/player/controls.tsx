@@ -25,30 +25,9 @@ const Icon = ({ d }: { d: string }) => (
 const button =
   "grid size-11 place-items-center rounded-full transition-[scale,background-color] duration-200 ease-spring hover:bg-white/15 active:scale-90 disabled:opacity-30";
 
-/** Shown while the pointer moves, gone after a while without. */
-const useAwake = (ms = 2400) => {
-  const [awake, setAwake] = useState(true);
-  useEffect(() => {
-    let timer = window.setTimeout(() => setAwake(false), ms);
-    const wake = () => {
-      setAwake(true);
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => setAwake(false), ms);
-    };
-    window.addEventListener("pointermove", wake, { passive: true });
-    window.addEventListener("pointerdown", wake, { passive: true });
-    window.addEventListener("keydown", wake);
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener("pointermove", wake);
-      window.removeEventListener("pointerdown", wake);
-      window.removeEventListener("keydown", wake);
-    };
-  }, [ms]);
-  return awake;
-};
-
 type Props = {
+  /** Shown – off until asked for (H, or a long press). */
+  shown: boolean;
   count: number;
   slide: number;
   onPrev: () => void;
@@ -62,10 +41,12 @@ type Props = {
 
 /**
  * The deck's controls: back, a dot per slide (the current one a pill),
- * on, full screen – and, logged in, arranging. They hide when nothing
- * moves; a thin bar at the bottom always shows how far along it is.
+ * on, full screen – and, logged in, arranging – with a thin bar along the
+ * bottom showing how far along it is. Out of sight until asked for: the
+ * slides alone on the screen.
  */
 export const Controls = ({
+  shown: asked,
   count,
   slide,
   onPrev,
@@ -76,7 +57,6 @@ export const Controls = ({
   onArrange,
   saveState,
 }: Props) => {
-  const awake = useAwake();
   const [fullscreen, setFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
   useEffect(() => {
@@ -85,13 +65,16 @@ export const Controls = ({
     document.addEventListener("fullscreenchange", change);
     return () => document.removeEventListener("fullscreenchange", change);
   }, []);
-  const shown = awake || arranging;
+  const shown = asked || arranging;
 
   return (
     <>
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[3px] bg-black/5"
+        className={cn(
+          "pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[3px] bg-black/5 transition-opacity duration-300",
+          !shown && "opacity-0"
+        )}
       >
         <m.i
           animate={{ scaleX: count > 1 ? slide / (count - 1) : 1 }}

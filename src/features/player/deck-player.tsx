@@ -30,6 +30,38 @@ type Props = {
   canArrange: boolean;
 };
 
+/** How long a press must last to show or hide the controls (ms). */
+const LONG_PRESS = 550;
+
+const CONTROLS_KEY = "ppp:controls";
+
+/**
+ * The controls shown or not – off at first, then as this device last had
+ * them (a convenience: without storage it is just off).
+ */
+const useControlsShown = () => {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    try {
+      setShown(window.localStorage.getItem(CONTROLS_KEY) === "1");
+    } catch {
+      // No storage – off.
+    }
+  }, []);
+  const set = useCallback((next: boolean | ((shown: boolean) => boolean)) => {
+    setShown((current) => {
+      const value = typeof next === "function" ? next(current) : next;
+      try {
+        window.localStorage.setItem(CONTROLS_KEY, value ? "1" : "0");
+      } catch {
+        // No storage – it just isn't remembered.
+      }
+      return value;
+    });
+  }, []);
+  return [shown, set] as const;
+};
+
 /** Keys that go on, and back. */
 const ON = new Set(["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"]);
 const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
@@ -38,7 +70,8 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
  * A deck, played: one slide at a time on the stage, each coming in with its
  * transition. On: → ↓ space, a click or tap on the right, a swipe to the
  * left. Back: ← ↑, a click or tap on the left, a swipe to the right. Home and
- * End, F for full screen, E arranges the stickers (logged in). Every slide
+ * End, F for full screen, H (or a long press) shows the controls, E
+ * arranges the stickers (logged in). Every slide
  * has its address (`/talk`, `/talk/1` …): written as it changes, without
  * loading anew – the browser's back goes a slide back.
  */
@@ -49,6 +82,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const posRef = useRef(pos);
   const [move, setMove] = useState<Move>({ kind: "fade", dir: 1, n: 0 });
   const [arranging, setArranging] = useState(false);
+  const [controls, setControls] = useControlsShown();
   const { arrangement, arrange, state } = useArrange(
     "decks",
     deck.id,
@@ -134,27 +168,54 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
           document.documentElement.requestFullscreen?.().catch(() => undefined);
       } else if ((event.key === "e" || event.key === "E") && canArrange) {
         setArranging((a) => !a);
+      } else if (event.key === "h" || event.key === "H") {
+        setControls((shown) => !shown);
       } else if (event.key === "Escape") {
         setArranging(false);
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [next, prev, to, slides.length, canArrange]);
+  }, [next, prev, to, slides.length, canArrange, setControls]);
 
   // A tap or click: on the right on, on the left back; a swipe the same.
   // Not on a sticker (it is thrown), a button or a link.
-  const down = useRef<{ id: number; x: number; y: number } | null>(null);
+  // A long press (no keyboard on a phone) shows or hides the controls.
+  const down = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    timer: number;
+    held: boolean;
+  } | null>(null);
   const onPointerDown = (event: React.PointerEvent) => {
     if (event.button > 0) return;
     const target = event.target as Element;
     if (target.closest("a, button, [data-sticker], [data-controls]")) return;
-    down.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    const start = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      held: false,
+      timer: window.setTimeout(() => {
+        start.held = true;
+        setControls((shown) => !shown);
+      }, LONG_PRESS),
+    };
+    down.current = start;
+  };
+  const onPointerMove = (event: React.PointerEvent) => {
+    const start = down.current;
+    if (start?.id !== event.pointerId) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > 12) {
+      window.clearTimeout(start.timer);
+    }
   };
   const onPointerUp = (event: React.PointerEvent) => {
     const start = down.current;
     down.current = null;
-    if (start?.id !== event.pointerId) return;
+    if (start) window.clearTimeout(start.timer);
+    if (start?.id !== event.pointerId || start.held) return;
     const dx = event.clientX - start.x;
     const dy = event.clientY - start.y;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) {
@@ -175,10 +236,13 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       <StickerStage>
         <main
           className="fixed inset-0 grid touch-none place-items-center overflow-hidden select-none"
+          onContextMenu={(event) => event.preventDefault()}
           onPointerCancel={() => {
+            if (down.current) window.clearTimeout(down.current.timer);
             down.current = null;
           }}
           onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           style={{
             background: slide.look.bg,
@@ -210,6 +274,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
           onNext={next}
           onPrev={prev}
           saveState={state}
+          shown={controls}
           slide={pos.slide}
         />
       </StickerStage>
