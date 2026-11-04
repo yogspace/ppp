@@ -331,8 +331,8 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
           },
           {
             blockType: "picture",
-            image: m.planet,
-            caption: "Planet Cute",
+            image: m.sea,
+            caption: "A very small boat",
             fit: "framed",
             transition: "toss",
           },

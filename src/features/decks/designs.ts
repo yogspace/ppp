@@ -275,6 +275,14 @@ export const DESIGNS: Block[] = [
         label: "Inside",
         fields: [
           {
+            name: "greeting",
+            type: "text",
+            admin: {
+              description:
+                "Inside, big, above the message – “Liebe Anna,”. Empty: “Dear Anna,”.",
+            },
+          },
+          {
             name: "message",
             type: "textarea",
             required: true,

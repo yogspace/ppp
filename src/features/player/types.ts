@@ -67,6 +67,8 @@ export type SlideData = SlideBase &
         /** The postmark's date: “4 NOV 2026”. */
         posted: string;
         headline: string;
+        /** Inside, above the message – empty: “Dear …,”. */
+        greeting: string;
         message: string;
         from: string;
       }

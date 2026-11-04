@@ -642,6 +642,10 @@ export interface Deck {
          * Big words on the front, each line a line. The stickers (tab Stickers) lie on it too.
          */
         headline?: string | null;
+        /**
+         * Inside, big, above the message – “Liebe Anna,”. Empty: “Dear Anna,”.
+         */
+        greeting?: string | null;
         message: string;
         /**
          * The signature: “Max”.
@@ -1156,6 +1160,7 @@ export interface DecksSelect<T extends boolean = true> {
               to?: T;
               stamp?: T;
               headline?: T;
+              greeting?: T;
               message?: T;
               from?: T;
               stickers?:

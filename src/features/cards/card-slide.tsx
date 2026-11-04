@@ -320,7 +320,7 @@ export const CardSlide = ({
               }}
             >
               <p className="headline text-[12cqw] normal-case">
-                Dear {slide.to || "you"},
+                {slide.greeting || `Dear ${slide.to || "you"},`}
               </p>
               {open && (
                 <button

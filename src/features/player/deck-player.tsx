@@ -242,7 +242,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     <MotionProvider>
       <StickerStage>
         <main
-          className="fixed inset-0 grid touch-none place-items-center overflow-hidden select-none"
+          className="fixed inset-0 grid touch-none place-items-center overflow-hidden"
           onContextMenu={(event) => event.preventDefault()}
           onPointerCancel={() => {
             if (down.current) window.clearTimeout(down.current.timer);

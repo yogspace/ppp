@@ -125,6 +125,7 @@ const slideOf = (
           pictureOf(slide.stamp, "small") ?? base.stickers[0]?.picture ?? null,
         posted,
         headline: slide.headline ?? "",
+        greeting: slide.greeting ?? "",
         message: slide.message,
         from: slide.from ?? "",
       };

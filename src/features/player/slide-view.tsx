@@ -167,11 +167,11 @@ const List = ({
               <m.span
                 animate={
                   shown
-                    ? { opacity: 1, x: "0%", rotate: i % 2 ? 0.8 : -0.8 }
-                    : { opacity: 0, x: "-30%", rotate: -5 }
+                    ? { opacity: 1, x: "0cqmin", rotate: i % 2 ? 0.8 : -0.8 }
+                    : { opacity: 0, x: "-40cqmin", rotate: -6 }
                 }
                 className="flex w-fit items-center gap-[0.55em] rounded-[1.2em] py-[0.38em] pr-[0.8em] pl-[0.5em] shadow-[0_0.5cqmin_1.4cqmin_-0.6cqmin_rgb(0_0_0/0.35)]"
-                initial={{ opacity: 0, x: "-30%", rotate: -5 }}
+                initial={{ opacity: 0, x: "-40cqmin", rotate: -6 }}
                 style={{
                   background: "var(--paper)",
                   color: "var(--paper-ink)",
