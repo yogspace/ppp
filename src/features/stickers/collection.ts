@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { CollectionConfig } from "payload";
 import { admins, anyone } from "@/access";
+import { cacheFiles } from "@/features/media/cache";
 import { MEDIA_DIR } from "@/lib/media-dir";
 
 /**
@@ -31,6 +32,7 @@ export const Stickers: CollectionConfig = {
   },
   upload: {
     staticDir: path.join(MEDIA_DIR, "stickers"),
+    modifyResponseHeaders: cacheFiles,
     mimeTypes: ["image/png", "image/webp", "image/svg+xml"],
     adminThumbnail: "small",
     imageSizes: [

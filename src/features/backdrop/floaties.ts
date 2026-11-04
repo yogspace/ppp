@@ -24,6 +24,95 @@ type Target = Paint & {
   colors: THREE.Color[];
   seed: number;
   around: Paint | null;
+  /** Where the slide's words are (text.ts's boxes) – and when last looked. */
+  words: Box[];
+  looked: number;
+  /**
+   * How long they have been coming (s) – one after another –, counted
+   * frame by frame, a slow frame (the first, building the shaders) counting
+   * short: none is skipped.
+   */
+  age: number;
+  drawnAt: number;
+  /** How far each floaty moved aside from its spot, so far. */
+  aside: { x: number; y: number }[] | null;
+};
+
+/** A box on the slide, x and y from -1 to 1, y up – like the spots. */
+type Box = { left: number; right: number; top: number; bottom: number };
+
+/** One floaty after another (s apart), each popping in this long (s). */
+const STAGGER = 0.11;
+const POP = 0.55;
+
+/** 0 → 1, overshooting a little on the way: a pop. */
+const backOut = (p: number) => {
+  const c = 1.9;
+  return 1 + (c + 1) * (p - 1) ** 3 + c * (p - 1) ** 2;
+};
+
+/** How often the words are looked for (ms) – points come, lines wrap. */
+const LOOK_EVERY = 900;
+/** How much of a floaty (its radius's share) may lie over words. */
+const OVER = 0.5;
+
+/** Every line of words on the canvas's slide, as boxes. */
+const wordBoxes = (canvas: HTMLCanvasElement): Box[] => {
+  const slide = canvas.closest("section");
+  const frame = canvas.getBoundingClientRect();
+  if (!(slide && frame.width && frame.height)) return [];
+  const boxes: Box[] = [];
+  const walker = document.createTreeWalker(slide, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (!node.textContent?.trim()) continue;
+    range.selectNodeContents(node);
+    for (const r of range.getClientRects()) {
+      if (r.width < 2 || r.height < 2) continue;
+      boxes.push({
+        left: ((r.left - frame.left) / frame.width) * 2 - 1,
+        right: ((r.right - frame.left) / frame.width) * 2 - 1,
+        top: 1 - ((r.top - frame.top) / frame.height) * 2,
+        bottom: 1 - ((r.bottom - frame.top) / frame.height) * 2,
+      });
+      if (boxes.length >= 120) return boxes;
+    }
+  }
+  return boxes;
+};
+
+/**
+ * Where a floaty at (x, y), this big (rx, ry), sits so it covers no words:
+ * pushed the shortest way out of every line it lies on, until at most
+ * `OVER` of it is left over the words – cut into, not hidden.
+ */
+const clear = (x: number, y: number, rx: number, ry: number, words: Box[]) => {
+  let px = x;
+  let py = y;
+  const keepX = rx * (1 - OVER);
+  const keepY = ry * (1 - OVER);
+  for (let pass = 0; pass < 3; pass++) {
+    let moved = false;
+    for (const box of words) {
+      const left = box.left - keepX;
+      const right = box.right + keepX;
+      const top = box.top + keepY;
+      const bottom = box.bottom - keepY;
+      if (px <= left || px >= right || py >= top || py <= bottom) continue;
+      const ways = [
+        [left - px, 0],
+        [right - px, 0],
+        [0, top - py],
+        [0, bottom - py],
+      ];
+      ways.sort((a, b) => Math.hypot(a[0], a[1]) - Math.hypot(b[0], b[1]));
+      px += ways[0][0];
+      py += ways[0][1];
+      moved = true;
+    }
+    if (!moved) break;
+  }
+  return { x: px, y: py };
 };
 
 const FOV = 30;
@@ -260,12 +349,33 @@ class Floaties {
     const halfW = halfH * this.camera.aspect;
     // By the shorter side: on a phone held upright they stay small.
     const scale = Math.min(halfW, halfH) / 3.6;
+    // Off the words: looked for now and then, moved aside softly.
+    const now = performance.now();
+    if (now - target.looked > LOOK_EVERY) {
+      target.words = wordBoxes(canvas);
+      target.looked = now;
+    }
+    if (target.drawnAt) {
+      target.age += Math.min((now - target.drawnAt) / 1000, 0.05);
+    }
+    target.drawnAt = now;
+    const first = !target.aside;
+    target.aside ??= this.floaties.map(() => ({ x: 0, y: 0 }));
+    const aside = target.aside;
     this.floaties.forEach((floaty, i) => {
       const [x, y, z, s] = floaty.spot;
       const bob = Math.sin(t * 0.7 + floaty.phase + target.seed) * 0.18;
+      const sx = x * 0.92;
+      const sy = y * 0.9;
+      const radius = s * scale * 0.8;
+      const to = clear(sx, sy, radius / halfW, radius / halfH, target.words);
+      const own = aside[i];
+      const ease = first || this.still ? 1 : 0.08;
+      own.x += (to.x - sx - own.x) * ease;
+      own.y += (to.y - sy - own.y) * ease;
       floaty.mesh.position.set(
-        x * halfW * 0.92 - this.lean.x * (0.2 + z * 0.08),
-        y * halfH * 0.9 + bob - this.lean.y * -0.15,
+        (sx + own.x) * halfW - this.lean.x * (0.2 + z * 0.08),
+        (sy + own.y) * halfH + bob - this.lean.y * -0.15,
         z
       );
       floaty.mesh.rotation.set(
@@ -273,7 +383,13 @@ class Floaties {
         floaty.phase * 0.5 + t * floaty.spin.y,
         t * floaty.spin.z
       );
-      floaty.mesh.scale.setScalar(s * scale);
+      // Popping in, one after another, once the slide is there.
+      const since = target.age - i * STAGGER;
+      const grown = this.still
+        ? 1
+        : backOut(Math.min(1, Math.max(0, since / POP)));
+      floaty.mesh.visible = grown > 0.001;
+      floaty.mesh.scale.setScalar(s * scale * Math.max(grown, 0.001));
       floaty.material.color.copy(target.colors[i % target.colors.length]);
     });
     this.renderer.render(this.scene, this.camera);
@@ -307,7 +423,7 @@ class Floaties {
     if (!(canvas && ctx)) return;
     target.around = { canvas, ctx };
     this.draw(target, this.still ? 0 : performance.now() / 1000);
-    canvas.style.transition = "opacity 0.7s ease";
+    canvas.style.transition = "opacity 0.2s ease";
     canvas.style.opacity = "1";
   }
 
@@ -347,6 +463,11 @@ export const floatInto = (
     colors: colors.map((c) => new THREE.Color(c)),
     seed: Math.random() * 10,
     around: null,
+    words: [],
+    looked: 0,
+    age: 0,
+    drawnAt: 0,
+    aside: null,
   };
   shared.add(target);
   const owner = shared;

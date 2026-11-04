@@ -2,6 +2,7 @@ import path from "node:path";
 import type { CollectionConfig } from "payload";
 import { admins, anyone } from "@/access";
 import { MEDIA_DIR } from "@/lib/media-dir";
+import { cacheFiles } from "./cache";
 
 /**
  * Every picture and video: what the slides show, the stickers (a PNG with a
@@ -30,6 +31,7 @@ export const Media: CollectionConfig = {
   },
   upload: {
     staticDir: path.join(MEDIA_DIR, "media"),
+    modifyResponseHeaders: cacheFiles,
     mimeTypes: ["image/*", "video/mp4", "video/webm"],
     adminThumbnail: "small",
     imageSizes: [

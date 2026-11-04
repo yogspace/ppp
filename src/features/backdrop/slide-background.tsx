@@ -58,7 +58,8 @@ export const AroundStage = ({ children }: { children: ReactNode }) => {
 const Floaties = ({ look }: { look: ThemeLook }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const { accent, bg, text } = look;
-  // Started once the slide is still (moving.ts), then kept – and faded in.
+  // Started once the slide is still (moving.ts), then kept; they pop in
+  // one after another (floaties.ts).
   const moving = useContext(SlideMoving);
   const [go, setGo] = useState(false);
   useEffect(() => {
@@ -93,12 +94,7 @@ const Floaties = ({ look }: { look: ThemeLook }) => {
     handle.around(moving ? null : (around?.current ?? null));
   }, [handle, moving, around]);
   return (
-    <canvas
-      aria-hidden
-      className="absolute inset-0 size-full transition-opacity duration-700"
-      ref={ref}
-      style={{ opacity: go ? 1 : 0 }}
-    />
+    <canvas aria-hidden className="absolute inset-0 size-full" ref={ref} />
   );
 };
 

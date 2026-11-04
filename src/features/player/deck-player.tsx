@@ -4,6 +4,7 @@ import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MotionProvider } from "@/components/motion";
 import { AroundStage } from "@/features/backdrop/slide-background";
+import { picturesIn, preload } from "@/features/media/preload";
 import { StickerStage } from "@/features/stickers/sticker-stage";
 import { useArrange } from "@/features/stickers/use-arrange";
 import type { Move } from "@/features/transitions/frames";
@@ -146,6 +147,15 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);
   }, [deck.slug, slides.length, goTo, steps]);
+
+  // This slide's pictures (a List's change with each point) and the next
+  // slide's, loaded ahead: there the moment they show.
+  useEffect(() => {
+    preload([
+      ...picturesIn(slides[pos.slide]),
+      ...picturesIn(slides[pos.slide + 1]),
+    ]);
+  }, [slides, pos.slide]);
 
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
