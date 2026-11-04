@@ -112,7 +112,7 @@ const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
       <Enter delay={0.3}>
         <Rich
           body={slide.body}
-          className="copy rich max-w-[120.889cqmin] text-[4.444cqmin]"
+          className="copy rich max-w-[120.889cqmin] text-[4.444cqmin] tall:text-[5.4cqmin]"
         />
       </Enter>
     )}
@@ -656,11 +656,13 @@ const GalleryStack = ({
                 picture={picture}
                 style={{ aspectRatio: `${aspect}` }}
               />
+              {/* Up to two lines, the rim growing along – then cut. */}
               <span
-                className="copy block truncate text-center text-neutral-800"
+                className="copy line-clamp-2 text-center leading-[1.15] text-neutral-800"
                 style={{
-                  height: foot,
+                  minHeight: foot,
                   paddingTop: caption ? 0.7 * u : 0,
+                  paddingBottom: caption ? 0.4 * u : 0,
                   fontSize: Math.max(12, 1.5 * u),
                 }}
               >
@@ -784,10 +786,11 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
                 style={{ aspectRatio: `${aspect}` }}
               />
               <span
-                className="copy block truncate px-[0.711cqmin] text-center text-neutral-800"
+                className="copy line-clamp-2 px-[0.711cqmin] text-center leading-[1.15] text-neutral-800"
                 style={{
-                  height: foot,
+                  minHeight: foot,
                   paddingTop: 0.5 * u,
+                  paddingBottom: 0.35 * u,
                   fontSize: Math.max(11, 1.3 * u),
                 }}
               >
@@ -801,35 +804,40 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
   );
 };
 
+/**
+ * Big words in big quote marks: the marks, the words and who said it, one
+ * block in the middle – the words as big as fits with the name under them
+ * (the name is measured along), the marks right above.
+ */
 const Quote = ({ slide }: { slide: Of<"quote"> }) => {
-  const fit = useFit(slide.quote, { max: 7, wrap: true });
+  // Upright, the words may be bigger: there is room above and below.
+  const { width, height } = useStageSize();
+  const fit = useFit(slide.quote, { max: height > width ? 10 : 7, wrap: true });
   return (
-    <div className="absolute inset-x-[17.778cqmin] inset-y-[10.667cqmin] flex flex-col justify-center">
-      <Enter
-        bouncy
-        className="headline -mb-[7.111cqmin] -ml-[3.556cqmin] text-[32cqmin] leading-none"
-        kind="pop"
-        style={{ color: "var(--accent)", textTransform: "none" }}
+    <div className="absolute inset-x-[17.778cqmin] top-[22cqmin] bottom-[10.667cqmin] flex items-center tall:inset-x-[10cqmin] tall:top-[30cqmin] tall:bottom-[22cqmin]">
+      <div
+        className="copy relative w-full font-medium text-balance"
+        ref={fit.ref}
+        style={{ fontSize: fit.fontSize, lineHeight: 1.18 }}
       >
-        “
-      </Enter>
-      <div className="flex min-h-0 flex-1 items-center">
-        <div
-          className="copy w-full font-medium text-balance"
-          ref={fit.ref}
-          style={{ fontSize: fit.fontSize, lineHeight: 1.18 }}
-        >
-          <Words delay={0.15} gap={0.04} text={slide.quote} />
-        </div>
-      </div>
-      {slide.author && (
         <Enter
-          className="copy mt-[3.556cqmin] text-[3.911cqmin] opacity-75"
-          delay={0.7}
+          bouncy
+          className="headline absolute bottom-full -left-[3.556cqmin] -mb-[13cqmin] text-[32cqmin] leading-none font-normal"
+          kind="pop"
+          style={{ color: "var(--accent)", textTransform: "none" }}
         >
-          — {slide.author}
+          “
         </Enter>
-      )}
+        <Words delay={0.15} gap={0.04} text={slide.quote} />
+        {slide.author && (
+          <Enter
+            className="mt-[0.6em] block text-[3.911cqmin] leading-snug opacity-75 tall:text-[4.6cqmin]"
+            delay={0.7}
+          >
+            — {slide.author}
+          </Enter>
+        )}
+      </div>
     </div>
   );
 };

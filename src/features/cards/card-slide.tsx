@@ -152,7 +152,7 @@ export const CardSlide = ({
           other); closed, it sits in the lower half, moved up to the middle. */}
       <m.div
         animate={{ y: open ? "0%" : "-25%" }}
-        className="relative aspect-[2/3] w-[min(78cqw,57cqh)] [container-type:inline-size]"
+        className="relative aspect-[2/3] w-[min(78cqw,57cqh)] [container-type:inline-size] tall:w-[min(90cqw,62cqh)]"
         initial={false}
         transition={{ type: "spring", stiffness: 120, damping: 18 }}
       >
