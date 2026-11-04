@@ -748,7 +748,7 @@ export interface Deck {
   createdAt: string;
 }
 /**
- * Color schemes, fonts and backgrounds – picked by a deck, a slide or a card.
+ * Color schemes, fonts and backgrounds – picked by a deck or a single slide.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "themes".
