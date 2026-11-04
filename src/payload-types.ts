@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     decks: Deck;
     media: Media;
+    stickers: Sticker;
     themes: Theme;
     users: User;
     'payload-kv': PayloadKv;
@@ -80,6 +81,7 @@ export interface Config {
   collectionsSelect: {
     decks: DecksSelect<false> | DecksSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    stickers: StickersSelect<false> | StickersSelect<true>;
     themes: ThemesSelect<false> | ThemesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -171,11 +173,11 @@ export interface Deck {
          */
         align?: ('center' | 'left' | 'right' | 'stairs') | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -223,11 +225,11 @@ export interface Deck {
         title: string;
         subtitle?: string | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -285,11 +287,11 @@ export interface Deck {
           [k: string]: unknown;
         };
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -337,11 +339,11 @@ export interface Deck {
         }[];
         stepwise?: boolean | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -382,15 +384,18 @@ export interface Deck {
         blockType: 'list';
       }
     | {
+        /**
+         * A picture or a video (plays muted, on a loop).
+         */
         image: string | Media;
         caption?: string | null;
         fit?: ('framed' | 'full') | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -447,14 +452,17 @@ export interface Deck {
           };
           [k: string]: unknown;
         } | null;
+        /**
+         * A picture or a video (plays muted, on a loop).
+         */
         image: string | Media;
         side?: ('right' | 'left') | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -515,17 +523,21 @@ export interface Deck {
          * They land as polaroids, a little scattered. On the slide a tap brings one up close.
          */
         pictures: {
+          /**
+           * A picture or a video (plays muted, on a loop).
+           */
           image: string | Media;
           caption?: string | null;
           id?: string | null;
         }[];
+        layout?: ('pile' | 'stack') | null;
         side?: ('right' | 'left') | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -569,11 +581,11 @@ export interface Deck {
         quote: string;
         author?: string | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -632,11 +644,11 @@ export interface Deck {
          */
         from?: string | null;
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -678,11 +690,11 @@ export interface Deck {
       }
     | {
         /**
-         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
           | {
-              image: string | Media;
+              sticker: string | Sticker;
               id?: string | null;
             }[]
           | null;
@@ -770,7 +782,7 @@ export interface Theme {
   createdAt: string;
 }
 /**
- * Pictures, stickers and background videos. A sticker is a PNG with a transparent background.
+ * Pictures and videos for slides and theme backgrounds. Stickers have a library of their own.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
@@ -810,6 +822,48 @@ export interface Media {
       filename?: string | null;
     };
     large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * Stickers to put on slides – PNGs with a transparent background. Upload once, use as often as you like.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stickers".
+ */
+export interface Sticker {
+  id: string;
+  /**
+   * Empty: after the file.
+   */
+  name: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    small?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    sticker?: {
       url?: string | null;
       width?: number | null;
       height?: number | null;
@@ -877,6 +931,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: string | Media;
+      } | null)
+    | ({
+        relationTo: 'stickers';
+        value: string | Sticker;
       } | null)
     | ({
         relationTo: 'themes';
@@ -948,7 +1006,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -965,7 +1023,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -981,7 +1039,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1003,7 +1061,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1020,7 +1078,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1038,7 +1096,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1058,11 +1116,12 @@ export interface DecksSelect<T extends boolean = true> {
                     caption?: T;
                     id?: T;
                   };
+              layout?: T;
               side?: T;
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1078,7 +1137,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1097,7 +1156,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1111,7 +1170,7 @@ export interface DecksSelect<T extends boolean = true> {
               stickers?:
                 | T
                 | {
-                    image?: T;
+                    sticker?: T;
                     id?: T;
                   };
               theme?: T;
@@ -1165,6 +1224,48 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
         large?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+      };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "stickers_select".
+ */
+export interface StickersSelect<T extends boolean = true> {
+  name?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+  sizes?:
+    | T
+    | {
+        small?:
+          | T
+          | {
+              url?: T;
+              width?: T;
+              height?: T;
+              mimeType?: T;
+              filesize?: T;
+              filename?: T;
+            };
+        sticker?:
           | T
           | {
               url?: T;

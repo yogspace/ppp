@@ -135,19 +135,28 @@ const clear = async (payload: Payload) => {
   });
   await payload.delete({
     collection: "media",
-    where: { filename: { in: ALL_PICTURES.map(fileName) } },
+    where: { filename: { in: Object.keys(PHOTOS).map(fileName) } },
+    ...local,
+  });
+  await payload.delete({
+    collection: "stickers",
+    where: { filename: { in: Object.keys(STICKERS).map(fileName) } },
     ...local,
   });
 };
 
-/** The demo's pictures – those already there by file name, the rest drawn. */
+/**
+ * The demo's pictures – the stickers into the sticker library, the photos
+ * into Pictures; those already there (by file name) kept, the rest drawn.
+ */
 const pictures = async (payload: Payload) => {
   const ids: Pictures = {};
   let made = 0;
   for (const name of ALL_PICTURES) {
+    const collection = name in STICKERS ? "stickers" : "media";
     const filename = fileName(name);
     const { docs } = await payload.find({
-      collection: "media",
+      collection,
       where: { filename: { equals: filename } },
       limit: 1,
       ...local,
@@ -157,12 +166,21 @@ const pictures = async (payload: Payload) => {
       continue;
     }
     const { data, mimetype } = await draw(name);
-    const doc = await payload.create({
-      collection: "media",
-      data: { alt: `A ${name}` },
-      file: { data, mimetype, name: filename, size: data.length },
-      ...local,
-    });
+    const file = { data, mimetype, name: filename, size: data.length };
+    const doc =
+      collection === "stickers"
+        ? await payload.create({
+            collection: "stickers",
+            data: { name },
+            file,
+            ...local,
+          })
+        : await payload.create({
+            collection: "media",
+            data: { alt: `A ${name}` },
+            file,
+            ...local,
+          });
     ids[name] = doc.id;
     made++;
   }
@@ -216,7 +234,7 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
   const look = themed.ids;
   const m = media.ids;
   const stickers = (...names: string[]) =>
-    names.map((name) => ({ image: m[name] }));
+    names.map((name) => ({ sticker: m[name] }));
 
   if (!deckThere) {
     await payload.create({
@@ -295,6 +313,22 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
             ],
             transition: "pop",
             stickers: stickers("heart"),
+          },
+          {
+            blockType: "gallery",
+            layout: "stack",
+            heading: "Throw them away",
+            body: rich(
+              "One after another, left and right – and after the last one, these words."
+            ),
+            pictures: [
+              { image: m.night, caption: "late" },
+              { image: m.sea, caption: "boat" },
+              { image: m.hills, caption: "hills!" },
+              { image: m.sunset, caption: "the sunset" },
+            ],
+            theme: look.night,
+            transition: "flip",
           },
           {
             blockType: "blank",

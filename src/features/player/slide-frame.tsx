@@ -97,7 +97,7 @@ export const SlideFrame = ({
           />
         ) : (
           <>
-            <SlideView slide={slide} step={step} />
+            <SlideView onForward={onOn} slide={slide} step={step} />
             <StickerLayer
               arrangement={arrangement}
               arranging={arranging}
@@ -115,6 +115,7 @@ export const SlideFrame = ({
           onBack={onBack}
           onOn={onOn}
           onward={onward}
+          point={slide.design === "gallery" ? "next picture" : "next point"}
           ready={opened}
         />
       </EnterDelay.Provider>

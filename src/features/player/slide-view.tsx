@@ -349,6 +349,142 @@ export const pileSpots = (count: number, width: number, height: number) => {
   });
 };
 
+/**
+ * A Gallery as a stack: the pictures one behind the other, the front one
+ * thrown away with each tap (or →) – to the left, to the right, in turn,
+ * fading as it goes; the next one comes forward. After the last one the
+ * words fly in. Back (←) brings the last thrown one back.
+ */
+const GalleryStack = ({
+  slide,
+  step,
+  onForward,
+}: {
+  slide: Of<"gallery">;
+  step: number;
+  onForward: () => void;
+}) => {
+  const base = useContext(EnterDelay);
+  const { width: stageW, height: stageH } = useStageSize();
+  const tall = stageH > stageW;
+  const u = unitOf(stageW, stageH);
+  const room = {
+    w: stageW * (tall ? 0.86 : 0.7),
+    h: stageH * (tall ? 0.62 : 0.74),
+  };
+  const gone = step >= slide.pictures.length;
+  const words = Boolean(slide.heading || slide.body);
+  return (
+    <>
+      <div
+        className="absolute inset-0 grid place-items-center"
+        style={{ perspective: 1400 }}
+      >
+        {slide.pictures.map(({ picture, caption }, i) => {
+          const aspect = picture.width / picture.height || 1;
+          const pad = 0.8 * u;
+          const foot = caption ? 3.6 * u : pad;
+          const photoW = Math.min(
+            room.w - 2 * pad,
+            (room.h - pad - foot) * aspect
+          );
+          const depth = i - step;
+          const thrown = depth < 0;
+          const side = i % 2 === 0 ? -1 : 1;
+          const front = depth === 0;
+          return (
+            <m.button
+              animate={
+                thrown
+                  ? {
+                      x: side * stageW * 0.75,
+                      y: -0.05 * stageH,
+                      z: 0,
+                      rotate: side * 28,
+                      scale: 0.9,
+                      opacity: 0,
+                    }
+                  : {
+                      x: 0,
+                      y: -depth * 1.4 * u,
+                      z: -depth * 60,
+                      rotate: depth === 0 ? -1.5 : ((i % 3) - 1) * 4,
+                      scale: 1 - depth * 0.04,
+                      opacity: depth < 5 ? 1 : 0,
+                    }
+              }
+              aria-label={
+                front ? `Throw ${picture.alt || "the picture"} away` : undefined
+              }
+              className="col-start-1 row-start-1 block rounded-[0.711cqmin] bg-white shadow-[0_1.4cqmin_3.2cqmin_-1.2cqmin_rgb(0_0_0/0.45)]"
+              disabled={!front}
+              initial={{
+                y: 0.6 * stageH,
+                rotate: (i % 2 ? 1 : -1) * 18,
+                opacity: 0,
+                z: -depth * 60,
+              }}
+              key={`${i}-${picture.src}`}
+              onClick={front ? onForward : undefined}
+              style={{
+                width: photoW + 2 * pad,
+                padding: `${pad}px ${pad}px 0`,
+                zIndex: slide.pictures.length - i,
+                cursor: front ? "pointer" : "default",
+                pointerEvents: front ? "auto" : "none",
+              }}
+              transition={{
+                default: {
+                  type: "spring",
+                  stiffness: 190,
+                  damping: 20,
+                  delay: step === 0 && !thrown ? base + 0.2 + i * 0.08 : 0,
+                },
+                opacity: {
+                  duration: thrown ? 0.45 : 0.25,
+                  delay: step === 0 && !thrown ? base + 0.2 + i * 0.08 : 0,
+                },
+              }}
+              type="button"
+            >
+              <Media
+                className="block w-full rounded-[0.356cqmin] object-cover"
+                picture={picture}
+                style={{ aspectRatio: `${aspect}` }}
+              />
+              <span
+                className="copy block truncate text-center text-neutral-800"
+                style={{
+                  height: foot,
+                  paddingTop: caption ? 0.7 * u : 0,
+                  fontSize: Math.max(12, 1.5 * u),
+                }}
+              >
+                {caption}
+              </span>
+            </m.button>
+          );
+        })}
+      </div>
+      {gone && words && (
+        <EnterDelay.Provider value={0.15}>
+          <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col items-center justify-center gap-[3.556cqmin] text-center">
+            {slide.heading && <Heading text={slide.heading} />}
+            {slide.body && (
+              <Enter delay={0.3}>
+                <Rich
+                  body={slide.body}
+                  className="copy rich max-w-[120cqmin] text-[4.444cqmin]"
+                />
+              </Enter>
+            )}
+          </div>
+        </EnterDelay.Provider>
+      )}
+    </>
+  );
+};
+
 const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
   const base = useContext(EnterDelay);
   const [near, setNear] = useState<number | null>(null);
@@ -497,9 +633,12 @@ const Quote = ({ slide }: { slide: Of<"quote"> }) => {
 export const SlideView = ({
   slide,
   step,
+  onForward,
 }: {
   slide: SlideData;
   step: number;
+  /** A tap that is the slide's next step (a stacked picture thrown). */
+  onForward: () => void;
 }) => {
   switch (slide.design) {
     case "poster":
@@ -515,7 +654,11 @@ export const SlideView = ({
     case "split":
       return <Split slide={slide} />;
     case "gallery":
-      return <Gallery slide={slide} />;
+      return slide.layout === "stack" ? (
+        <GalleryStack onForward={onForward} slide={slide} step={step} />
+      ) : (
+        <Gallery slide={slide} />
+      );
     case "quote":
       return <Quote slide={slide} />;
     default:

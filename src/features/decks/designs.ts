@@ -72,12 +72,14 @@ const design = (slug: DesignSlug, about: string, content: Field[]): Block => ({
   ],
 });
 
-const picture = (description?: string): Field => ({
+/** A picture – or a video, which plays muted, on a loop, like a moving photo. */
+const picture = (
+  description = "A picture or a video (plays muted, on a loop)."
+): Field => ({
   name: "image",
   type: "upload",
   relationTo: "media",
   required: true,
-  filterOptions: { mimeType: { contains: "image" } },
   admin: { description },
 });
 
@@ -187,6 +189,22 @@ export const DESIGNS: Block[] = [
             "They land as polaroids, a little scattered. On the slide a tap brings one up close.",
         },
         fields: [picture(), { name: "caption", type: "text" }],
+      },
+      {
+        name: "layout",
+        type: "radio",
+        defaultValue: "pile",
+        options: [
+          {
+            label: "Pile – scattered polaroids, a tap brings one up close",
+            value: "pile",
+          },
+          {
+            label:
+              "Stack – one behind the other, each tap throws the front one away",
+            value: "stack",
+          },
+        ],
       },
       {
         name: "side",

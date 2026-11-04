@@ -6,9 +6,17 @@ import type { SlideData } from "./types";
  */
 export type Pos = { slide: number; step: number };
 
-/** The clicks a slide holds before the next one comes. */
-export const stepsOf = (slide: SlideData) =>
-  slide.design === "list" && slide.stepwise ? slide.items.length : 0;
+/**
+ * The clicks a slide holds before the next one comes: a List's points one
+ * by one, a stacked Gallery's pictures thrown away one by one.
+ */
+export const stepsOf = (slide: SlideData) => {
+  if (slide.design === "list" && slide.stepwise) return slide.items.length;
+  if (slide.design === "gallery" && slide.layout === "stack") {
+    return slide.pictures.length;
+  }
+  return 0;
+};
 
 /** On: the slide's next click, else the next slide – at the end it stays. */
 export const forward = (steps: readonly number[], pos: Pos): Pos => {

@@ -54,6 +54,8 @@ export type SlideData = SlideBase &
         heading: string;
         body: RichBody | null;
         pictures: { picture: Picture; caption: string }[];
+        /** Scattered polaroids, or a stack thrown away one by one. */
+        layout: "pile" | "stack";
         side: "left" | "right";
       }
     | { design: "quote"; quote: string; author: string }

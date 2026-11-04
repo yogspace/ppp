@@ -9,17 +9,17 @@ import { readArrangement } from "@/features/stickers/arrangement";
 import { lookOf } from "@/features/themes/look";
 import type { ThemeLook } from "@/features/themes/theme";
 import { DEFAULT_TRANSITION, isChoice } from "@/features/transitions/kinds";
-import type { Deck, Media } from "@/payload-types";
+import type { Deck, Sticker } from "@/payload-types";
 
 type StickerRows =
-  | { image: string | Media; id?: string | null }[]
+  | { sticker: string | Sticker; id?: string | null }[]
   | null
   | undefined;
 
-/** A slide's or card's stickers – those whose picture is still there. */
+/** A slide's stickers – those still in the library. */
 export const stickersOf = (rows: StickerRows): StickerData[] =>
   (rows ?? []).flatMap((row) => {
-    const picture = pictureOf(row.image, "sticker");
+    const picture = pictureOf(row.sticker, "sticker");
     return picture && row.id && !picture.video ? [{ id: row.id, picture }] : [];
   });
 
@@ -106,6 +106,7 @@ const slideOf = (
           const picture = pictureOf(row.image);
           return picture ? [{ picture, caption: row.caption ?? "" }] : [];
         }),
+        layout: slide.layout ?? "pile",
         side: slide.side ?? "right",
       };
     case "quote":

@@ -9,6 +9,7 @@ import { Decks } from "@/features/decks/collection";
 import { Media } from "@/features/media/collection";
 import { SEEDS_PATH } from "@/features/seeds/definitions";
 import { seedEndpoint } from "@/features/seeds/endpoint";
+import { Stickers } from "@/features/stickers/collection";
 import { Themes } from "@/features/themes/collection";
 import { editor } from "@/lib/editor";
 import { serverUrl } from "@/lib/server-url";
@@ -21,7 +22,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
  * - decks    slides to present, each slide a design (features/decks) –
  *            a greeting card is a deck with one Card slide
  * - themes   color schemes, fonts and backgrounds (features/themes)
- * - media    pictures, stickers, background videos
+ * - media    pictures and videos (slides, theme backgrounds)
+ * - stickers the sticker library, used on slides as often as wanted
  * - users    the admin login
  * - seeds    the demo deck and card, from the admin's Seeds page
  *
@@ -60,7 +62,7 @@ export default buildConfig({
     },
   },
   // The admin's groups follow this order.
-  collections: [Decks, Media, Themes, Users],
+  collections: [Decks, Media, Stickers, Themes, Users],
   endpoints: [seedEndpoint],
   // The login cookie, `ppp-token` – only sent along from our own pages.
   cookiePrefix: "ppp",

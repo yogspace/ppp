@@ -51,6 +51,15 @@ export const Decks: CollectionConfig = {
   fields: [
     { name: "title", type: "text", required: true },
     slugField(),
+    // A QR code of the address, the link to copy, the code to download.
+    {
+      name: "share",
+      type: "ui",
+      admin: {
+        position: "sidebar",
+        components: { Field: "@/features/decks/share-field#ShareField" },
+      },
+    },
     {
       name: "theme",
       type: "relationship",

@@ -1,22 +1,26 @@
 import type { ArrayField, Endpoint, JSONField } from "payload";
 import { arrange, readArrangeRequest } from "./arrangement";
 
-/** A slide's or card's stickers: which pictures, in which order. */
+/**
+ * A slide's stickers: which from the library (Stickers), in which order –
+ * the same one as often as wanted, each row a sticker of its own with its
+ * own place.
+ */
 export const stickersField = (): ArrayField => ({
   name: "stickers",
   type: "array",
   labels: { singular: "Sticker", plural: "Stickers" },
   admin: {
     description:
-      "PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.",
+      "From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.",
+    components: { RowLabel: "@/features/stickers/row-label#StickerRowLabel" },
   },
   fields: [
     {
-      name: "image",
+      name: "sticker",
       type: "upload",
-      relationTo: "media",
+      relationTo: "stickers",
       required: true,
-      filterOptions: { mimeType: { contains: "image" } },
     },
   ],
 });

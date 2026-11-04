@@ -24,7 +24,7 @@ export const Media: CollectionConfig = {
   admin: {
     group: "Library",
     description:
-      "Pictures, stickers and background videos. A sticker is a PNG with a transparent background.",
+      "Pictures and videos for slides and theme backgrounds. Stickers have a library of their own.",
     listSearchableFields: ["filename", "alt"],
     defaultColumns: ["filename", "alt", "updatedAt"],
   },

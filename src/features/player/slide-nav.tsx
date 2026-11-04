@@ -10,9 +10,8 @@ import { isDark } from "@/features/themes/theme";
  */
 export type Onward = "next" | "point" | "again" | null;
 
-const LABELS: Record<Exclude<Onward, null>, string> = {
+const LABELS: Record<Exclude<Onward, "point" | null>, string> = {
   next: "next",
-  point: "next point",
   again: "again",
 };
 
@@ -21,6 +20,8 @@ const SPRING = { type: "spring", stiffness: 420, damping: 15 } as const;
 type Props = {
   look: ThemeLook;
   onward: Onward;
+  /** What a step of this slide is called: “next point”, “next picture”. */
+  point: string;
   back: boolean;
   /** Its things are in: the button may come – a Card's once it is open. */
   ready: boolean;
@@ -39,6 +40,7 @@ type Props = {
 export const SlideNav = ({
   look,
   onward,
+  point,
   back,
   ready,
   delay,
@@ -106,7 +108,7 @@ export const SlideNav = ({
               whileHover={{ scale: 1.07, rotate: 0 }}
               whileTap={{ scale: 0.9 }}
             >
-              {LABELS[onward]}
+              {onward === "point" ? point : LABELS[onward]}
               <svg
                 aria-hidden
                 className={
