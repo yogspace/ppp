@@ -500,6 +500,77 @@ export interface Deck {
         blockType: 'split';
       }
     | {
+        heading?: string | null;
+        body?: {
+          root: {
+            type: string;
+            children: {
+              type: any;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        /**
+         * They land as polaroids, a little scattered. On the slide a tap brings one up close.
+         */
+        pictures: {
+          image: string | Media;
+          caption?: string | null;
+          id?: string | null;
+        }[];
+        side?: ('right' | 'left') | null;
+        /**
+         * PNGs with a transparent background – each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         */
+        stickers?:
+          | {
+              image: string | Media;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * This slide's own theme – empty: the deck's.
+         */
+        theme?: (string | null) | Theme;
+        /**
+         * How this slide comes in – empty: the deck's. 💾 ones are PowerPoint 2003.
+         */
+        transition?:
+          | (
+              | 'swipe'
+              | 'boing'
+              | 'pop'
+              | 'toss'
+              | 'flip'
+              | 'hinge'
+              | 'jelly'
+              | 'zoom'
+              | 'blob'
+              | 'confetti'
+              | 'curtain'
+              | 'fade'
+              | 'cut'
+              | 'spinner'
+              | 'checkerboard'
+              | 'blinds'
+              | 'dissolve'
+              | 'star'
+              | 'heart'
+              | 'clock'
+              | 'surprise'
+            )
+          | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'gallery';
+      }
+    | {
         quote: string;
         author?: string | null;
         /**
@@ -965,6 +1036,30 @@ export interface DecksSelect<T extends boolean = true> {
               heading?: T;
               body?: T;
               image?: T;
+              side?: T;
+              stickers?:
+                | T
+                | {
+                    image?: T;
+                    id?: T;
+                  };
+              theme?: T;
+              transition?: T;
+              id?: T;
+              blockName?: T;
+            };
+        gallery?:
+          | T
+          | {
+              heading?: T;
+              body?: T;
+              pictures?:
+                | T
+                | {
+                    image?: T;
+                    caption?: T;
+                    id?: T;
+                  };
               side?: T;
               stickers?:
                 | T

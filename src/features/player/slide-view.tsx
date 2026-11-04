@@ -1,7 +1,7 @@
 "use client";
 
 import { m } from "motion/react";
-import { type CSSProperties, useContext } from "react";
+import { type CSSProperties, useContext, useState } from "react";
 import type { Picture } from "@/features/media/picture";
 import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
@@ -279,6 +279,133 @@ const Split = ({ slide }: { slide: Of<"split"> }) => {
   );
 };
 
+/** The polaroids' little turns, one after another. */
+const TURNS = [-6, 4, -3, 7, -5, 3, 6, -4, 5, -7, 2, -2];
+
+/**
+ * Where a pile's polaroids lie in a `width` × `height` room: a loose grid
+ * (the last row centred), each nudged a little off its cell, turned.
+ */
+export const pileSpots = (count: number, width: number, height: number) => {
+  const cols = Math.max(1, Math.round(Math.sqrt((count * width) / height)));
+  const rows = Math.ceil(count / cols);
+  const cw = width / cols;
+  const ch = height / rows;
+  return Array.from({ length: count }, (_, i) => {
+    const row = Math.floor(i / cols);
+    const inRow = row === rows - 1 ? count - row * cols : cols;
+    const offset = ((cols - inRow) * cw) / 2;
+    const nudgeX = (((i * 37) % 11) / 11 - 0.5) * cw * 0.2;
+    const nudgeY = (((i * 53) % 13) / 13 - 0.5) * ch * 0.2;
+    return {
+      x: offset + (i % cols) * cw + cw / 2 + nudgeX,
+      y: row * ch + ch / 2 + nudgeY,
+      w: cw * 1.1,
+      h: ch * 1.1,
+      r: TURNS[i % TURNS.length],
+    };
+  });
+};
+
+const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
+  const base = useContext(EnterDelay);
+  const [near, setNear] = useState<number | null>(null);
+  const words = Boolean(slide.heading || slide.body);
+  const left = slide.side === "left";
+  // The pile's room (cqw).
+  const width = words ? 52 : 86;
+  const height = 45;
+  const spots = pileSpots(slide.pictures.length, width, height);
+  return (
+    <div
+      className={cn(
+        "absolute inset-x-[6cqw] inset-y-[5.5cqw] flex items-center gap-[4cqw]",
+        left && "flex-row-reverse"
+      )}
+    >
+      {words && (
+        <div className="flex min-w-0 flex-1 flex-col gap-[2cqw]">
+          {slide.heading && <Heading size={4.4} text={slide.heading} />}
+          {slide.body && (
+            <Enter delay={0.3}>
+              <Rich body={slide.body} className="copy rich text-[2.1cqw]" />
+            </Enter>
+          )}
+        </div>
+      )}
+      <div
+        className="relative flex-none"
+        style={{ width: `${width}cqw`, height: `${height}cqw` }}
+      >
+        {slide.pictures.map(({ picture, caption }, i) => {
+          const spot = spots[i];
+          const aspect = picture.width / picture.height || 1;
+          // The photo within its cell, the frame around it.
+          const photoW = Math.min(spot.w - 1.6, (spot.h - 4) * aspect);
+          const frameW = photoW + 1.4;
+          const frameH = photoW / aspect + 4;
+          const close = near === i;
+          const zoom = Math.min(
+            (width * 0.86) / frameW,
+            (height * 0.96) / frameH
+          );
+          return (
+            <m.button
+              animate={{
+                x: close ? `${width / 2 - spot.x}cqw` : "0cqw",
+                y: close ? `${height / 2 - spot.y}cqw` : "0cqw",
+                rotate: close ? 0 : spot.r,
+                scale: close ? zoom : 1,
+                opacity: 1,
+              }}
+              aria-label={
+                close
+                  ? "Put the picture back"
+                  : `Show ${picture.alt || "the picture"} up close`
+              }
+              aria-pressed={close}
+              className="absolute block cursor-zoom-in rounded-[0.4cqw] bg-white p-[0.7cqw] pb-0 shadow-[0_0.8cqw_1.8cqw_-0.6cqw_rgb(0_0_0/0.4)] aria-pressed:cursor-zoom-out"
+              initial={{
+                x: left ? "-60cqw" : "60cqw",
+                y: "20cqw",
+                rotate: spot.r * 4,
+                opacity: 0,
+              }}
+              key={`${i}-${picture.src}`}
+              onClick={() => setNear(close ? null : i)}
+              style={{
+                left: `${spot.x - frameW / 2}cqw`,
+                top: `${spot.y - frameH / 2}cqw`,
+                width: `${frameW}cqw`,
+                zIndex: close ? 30 : i,
+              }}
+              transition={{
+                default: {
+                  type: "spring",
+                  stiffness: 170,
+                  damping: 17,
+                  delay: near === null && !close ? base + 0.25 + i * 0.12 : 0,
+                },
+                opacity: { duration: 0.2, delay: base + 0.25 + i * 0.12 },
+              }}
+              type="button"
+            >
+              <Media
+                className="block w-full rounded-[0.2cqw] object-cover"
+                picture={picture}
+                style={{ aspectRatio: `${aspect}` }}
+              />
+              <span className="copy block h-[3.3cqw] truncate px-[0.4cqw] pt-[0.5cqw] text-center text-[1.3cqw] text-neutral-800">
+                {caption}
+              </span>
+            </m.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const Quote = ({ slide }: { slide: Of<"quote"> }) => {
   const fit = useFit(slide.quote, { max: 7, wrap: true });
   return (
@@ -329,6 +456,8 @@ export const SlideView = ({
       return <PictureSlide slide={slide} />;
     case "split":
       return <Split slide={slide} />;
+    case "gallery":
+      return <Gallery slide={slide} />;
     case "quote":
       return <Quote slide={slide} />;
     default:

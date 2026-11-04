@@ -118,6 +118,14 @@ const STICKERS = {
     ${face(300, 290, 0.9)}`,
 };
 
+// A few “photos” for the gallery – little landscapes, drawn here.
+const PHOTOS = {
+  sunset: `<rect width="800" height="600" fill="#ffb4a2"/><circle cx="400" cy="360" r="120" fill="#ff6b6b"/><rect y="380" width="800" height="220" fill="#5f6caf"/><path d="M0 420 q100 -20 200 0 t200 0 t200 0 t200 0 V600 H0Z" fill="#4a55a2"/>`,
+  hills: `<rect width="800" height="600" fill="#bde0fe"/><circle cx="640" cy="130" r="60" fill="#ffd166"/><path d="M0 420 Q200 260 420 400 T800 360 V600 H0Z" fill="#80ed99"/><path d="M0 500 Q260 380 520 480 T800 460 V600 H0Z" fill="#38b000"/>`,
+  night: `<rect width="800" height="600" fill="#22223b"/><circle cx="560" cy="160" r="70" fill="#f2e9e4"/><circle cx="590" cy="140" r="62" fill="#22223b"/>${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 197) % 800}" cy="${(i * 89) % 380}" r="${1 + (i % 3)}" fill="#fff"/>`).join("")}<path d="M0 470 L160 330 L300 450 L470 290 L640 440 L800 360 V600 H0Z" fill="#4a4e69"/>`,
+  sea: `<rect width="600" height="800" fill="#caf0f8"/><rect y="420" width="600" height="380" fill="#48cae4"/><path d="M0 460 q75 -25 150 0 t150 0 t150 0 t150 0" stroke="#fff" stroke-width="10" fill="none"/><path d="M220 420 L300 250 L380 420Z" fill="#fff"/><rect x="296" y="250" width="8" height="190" fill="#6d597a"/><rect x="200" y="420" width="200" height="40" rx="18" fill="#e56b6f"/>`,
+};
+
 const svg = (inner) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" viewBox="0 0 600 600">${inner}</svg>`;
 
@@ -138,6 +146,26 @@ for (const [name, inner] of Object.entries(STICKERS)) {
     "file",
     new Blob([png], { type: "image/png" }),
     `demo-${name}.png`
+  );
+  form.append("_payload", JSON.stringify({ alt: `A ${name}` }));
+  media[name] = (await api("/media", { method: "POST", body: form })).doc.id;
+}
+
+console.info("→ Photos …");
+for (const [name, inner] of Object.entries(PHOTOS)) {
+  const [, w, h] = inner.match(/width="(\d+)" height="(\d+)"/) ?? [0, 800, 600];
+  const jpg = await sharp(
+    Buffer.from(
+      `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${inner}</svg>`
+    )
+  )
+    .jpeg({ quality: 88 })
+    .toBuffer();
+  const form = new FormData();
+  form.append(
+    "file",
+    new Blob([jpg], { type: "image/jpeg" }),
+    `demo-${name}.jpg`
   );
   form.append("_payload", JSON.stringify({ alt: `A ${name}` }));
   media[name] = (await api("/media", { method: "POST", body: form })).doc.id;
@@ -274,6 +302,21 @@ await api(
         caption: "Planet Cute",
         fit: "framed",
         transition: "toss",
+      },
+      {
+        blockType: "gallery",
+        heading: "Summer, roughly",
+        body: rich(
+          "A sunset, some hills, a night and a very small boat. Tap a picture to bring it up close."
+        ),
+        pictures: [
+          { image: media.sunset, caption: "the sunset" },
+          { image: media.hills, caption: "hills!" },
+          { image: media.night, caption: "late" },
+          { image: media.sea, caption: "boat" },
+        ],
+        transition: "pop",
+        stickers: stickers("heart"),
       },
       {
         blockType: "blank",

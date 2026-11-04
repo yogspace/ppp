@@ -4,7 +4,7 @@ Slides and greeting cards, just for me – cute, springy, with stickers you can 
 
 ## What it does
 
-- **Decks** at `/<slug>`: the first slide is `/<slug>`, the next ones `/<slug>/1`, `/<slug>/2` … Every slide picks a **design** (Big type, Title, Text, List, Picture, Words + picture, Quote, Just stickers), a **theme** (or the deck's) and a **transition** (or the deck's). Words drop in word by word, pictures fly in, a List can show one point per click.
+- **Decks** at `/<slug>`: the first slide is `/<slug>`, the next ones `/<slug>/1`, `/<slug>/2` … Every slide picks a **design** (Big type, Title, Text, List, Picture, Words + picture, Gallery, Quote, Just stickers), a **theme** (or the deck's) and a **transition** (or the deck's). Words drop in word by word, pictures fly in, a List can show one point per click.
 - **Transitions**, per slide: the good ones (Swipe, Boing, Pop, Toss, Flip, Hinge, Jelly, Zoom, Blob, Confetti, Curtain, Fade, Cut), the 💾 PowerPoint 2003 ones (Spinner, Checkerboard, Blinds, Dissolve, Star wipe, Heart wipe, Clock) and 🎲 Surprise me.
 - **Cards** at `/<slug>`: an envelope – the address, a stamp (a sticker with a perforated edge), a postmark. A tap: it turns over, the seal pops off, the card slides out. Its front: big words and stickers; a tap folds it open upwards (made for a phone held upright): “Dear …,”, the message, the signature.
 - **Themes** (admin → Themes): background, text and accent colors, a font (Switzer, Pally, Gambarino), headlines in capitals or not, a background (plain, sketchbook lines, drifting dots, 3D floaties, a picture or video) and grain. A card's paper has colors of its own.
@@ -19,16 +19,14 @@ Next.js 16, React 19, Tailwind CSS 4, motion, three.js, Payload 3 on MongoDB, Bi
 
 ## Structure
 
-| | |
-|---|---|
-| `src/features/decks` | the `decks` collection, the slide designs (blocks), a deck as the player gets it |
-| `src/features/cards` | the `cards` collection, the card page and its envelope |
-| `src/features/player` | playing a deck: navigation and addresses (`steps.ts`), the stage, a slide's frame, the designs' views, the controls |
-| `src/features/transitions` | the transitions: their list (`kinds.ts`), the frames' motion (`frames.ts`), the wipes' clip paths (`reveal.ts`), the covers (`overlay.tsx`) |
-| `src/features/stickers` | stickers: placements (`arrangement.ts`), the outline (`outline.ts`, `art.ts`), the 3D renderer, dragging and throwing (`sticker.tsx`), saving an arrangement |
-| `src/features/themes` | the `themes` collection, a theme as CSS variables |
-| `src/features/backdrop` | a slide's background, the 3D floaties |
-| `src/features/media`, `admin`, `slug` | uploads, the admin login, addresses shared by decks and cards |
+- `src/features/decks` – the `decks` collection, the slide designs (blocks), a deck as the player gets it
+- `src/features/cards` – the `cards` collection, the card page and its envelope
+- `src/features/player` – playing a deck: navigation and addresses (`steps.ts`), the stage, a slide's frame, the designs' views, the controls
+- `src/features/transitions` – their list (`kinds.ts`), the frames' motion (`frames.ts`), the wipes' clip paths (`reveal.ts`), the covers (`overlay.tsx`)
+- `src/features/stickers` – placements (`arrangement.ts`), the outline (`outline.ts`, `art.ts`), the 3D renderer, dragging and throwing (`sticker.tsx`), saving an arrangement
+- `src/features/themes` – the `themes` collection, a theme as CSS variables
+- `src/features/backdrop` – a slide's background, the 3D floaties
+- `src/features/media`, `admin`, `slug` – uploads, the admin login, addresses shared by decks and cards
 
 Where a sticker sits is kept apart from the admin's form – a document's `arrangement` (by the sticker's row id), written only by `POST /api/<decks|cards>/:id/arrange`; the form can't write it, so saving in the admin never undoes an arrangement made on the page.
 

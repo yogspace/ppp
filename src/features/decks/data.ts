@@ -84,6 +84,18 @@ const slideOf = (
         image: pictureOf(slide.image),
         side: slide.side ?? "right",
       };
+    case "gallery":
+      return {
+        ...base,
+        design: "gallery",
+        heading: slide.heading ?? "",
+        body: (slide.body as RichBody | null) ?? null,
+        pictures: (slide.pictures ?? []).flatMap((row) => {
+          const picture = pictureOf(row.image);
+          return picture ? [{ picture, caption: row.caption ?? "" }] : [];
+        }),
+        side: slide.side ?? "right",
+      };
     case "quote":
       return {
         ...base,

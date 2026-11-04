@@ -154,6 +154,38 @@ export const DESIGNS: Block[] = [
       },
     ]
   ),
+  design(
+    "gallery",
+    "Gallery",
+    "A few words and a pile of pictures, flying in one by one.",
+    [
+      { name: "heading", type: "text" },
+      { name: "body", type: "richText", editor },
+      {
+        name: "pictures",
+        type: "array",
+        required: true,
+        minRows: 1,
+        maxRows: 12,
+        labels: { singular: "Picture", plural: "Pictures" },
+        admin: {
+          description:
+            "They land as polaroids, a little scattered. On the slide a tap brings one up close.",
+        },
+        fields: [picture(), { name: "caption", type: "text" }],
+      },
+      {
+        name: "side",
+        type: "radio",
+        defaultValue: "right",
+        options: [
+          { label: "Pictures right", value: "right" },
+          { label: "Pictures left", value: "left" },
+        ],
+        admin: { layout: "horizontal" },
+      },
+    ]
+  ),
   design("quote", "Quote", "Big words in big quote marks.", [
     { name: "quote", type: "textarea", required: true, admin: { rows: 3 } },
     { name: "author", type: "text" },

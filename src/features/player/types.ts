@@ -49,6 +49,13 @@ export type SlideData = SlideBase &
         image: Picture | null;
         side: "left" | "right";
       }
+    | {
+        design: "gallery";
+        heading: string;
+        body: RichBody | null;
+        pictures: { picture: Picture; caption: string }[];
+        side: "left" | "right";
+      }
     | { design: "quote"; quote: string; author: string }
     | { design: "blank" }
   );
