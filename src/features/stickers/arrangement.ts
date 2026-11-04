@@ -31,6 +31,20 @@ const SPOTS: readonly [number, number][] = [
   [0.38, 0.88],
   [0.24, 0.1],
 ];
+/** On a card: its corners and edges, keeping clear of the words. */
+const EDGES: readonly [number, number][] = [
+  [0.1, 0.13],
+  [0.9, 0.86],
+  [0.9, 0.14],
+  [0.1, 0.87],
+  [0.5, 0.06],
+  [0.5, 0.95],
+  [0.04, 0.5],
+  [0.96, 0.5],
+];
+
+export type Spots = "slide" | "edges";
+
 const TURNS = [-12, 9, -6, 14, 8, -10, 5, -15, 11, -4];
 
 const clamp = (value: number, min: number, max: number) =>
@@ -43,18 +57,21 @@ const turn = (degrees: number) => {
 };
 
 /**
- * The `index`th sticker's default: its spot, a little turned, as wide as
- * keeps every sticker about the same area (`aspect` = width / height) –
+ * The `index`th sticker's default: its spot – over the slide, or along the
+ * edges (a card, its words in the middle) – a little turned, as wide as
+ * keeps every sticker about the same area (`aspect` = width / height);
  * `size` is a square one's width.
  */
 export const defaultPlacement = (
   index: number,
   aspect: number,
-  size = 0.15
+  size = 0.15,
+  spots: Spots = "slide"
 ): Placement => {
-  const [x, y] = SPOTS[index % SPOTS.length];
+  const list = spots === "edges" ? EDGES : SPOTS;
+  const [x, y] = list[index % list.length];
   // Past the last spot: round again, a little shifted.
-  const round = Math.floor(index / SPOTS.length);
+  const round = Math.floor(index / list.length);
   const safe = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
   return {
     x: clamp(x + round * 0.04, 0, 1),

@@ -83,6 +83,17 @@ export const Decks: CollectionConfig = {
       },
     },
     {
+      name: "nextLabel",
+      type: "text",
+      label: "Next button",
+      admin: {
+        position: "sidebar",
+        placeholder: "Just an arrow",
+        description:
+          "Words on every slide's next button, like “weiter”. Empty: just an arrow. A slide may have its own (tab Look).",
+      },
+    },
+    {
       name: "dock",
       type: "checkbox",
       label: "Dock",

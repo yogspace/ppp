@@ -275,17 +275,11 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
             <SlideNav
               back={pos.slide > 0 || pos.step > 0}
               delay={move.n === 0 ? 1.2 : 0.3}
+              label={slide.nextLabel || deck.nextLabel}
               look={slide.look}
               onBack={prev}
               onOn={onward === "again" ? () => to(0) : next}
               onward={onward}
-              point={
-                slide.design === "gallery"
-                  ? "next picture"
-                  : slide.design === "card"
-                    ? "open"
-                    : "next point"
-              }
               ready={ready}
             />
           </Stage>

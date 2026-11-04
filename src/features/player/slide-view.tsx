@@ -1,7 +1,7 @@
 "use client";
 
-import { m } from "motion/react";
-import { type CSSProperties, useContext, useState } from "react";
+import { AnimatePresence, m } from "motion/react";
+import { type CSSProperties, useContext, useEffect, useState } from "react";
 import type { Picture } from "@/features/media/picture";
 import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
@@ -119,6 +119,42 @@ const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
   </div>
 );
 
+/**
+ * A List's picture: always in the same place, beside the list (above it on
+ * an upright screen) – a polaroid that swaps, tilting, when another point
+ * is on.
+ */
+const ListPicture = ({
+  picture,
+  index,
+}: {
+  picture: Picture;
+  index: number;
+}) => {
+  const box = useFitBox(picture, [0.36, 0.66], [0.8, 0.34]);
+  const turn = index % 2 ? 2.5 : -2.5;
+  return (
+    <div className="relative grid flex-none place-items-center">
+      <AnimatePresence initial={false} mode="popLayout">
+        <m.figure
+          animate={{ opacity: 1, scale: 1, rotate: turn, y: "0%" }}
+          className="rounded-[1.067cqmin] bg-white p-[1.6cqmin] shadow-[0_2cqmin_5cqmin_-1.8cqmin_rgb(0_0_0/0.45)]"
+          exit={{ opacity: 0, scale: 0.85, rotate: -turn * 4, y: "-8%" }}
+          initial={{ opacity: 0, scale: 0.85, rotate: turn * 4, y: "8%" }}
+          key={picture.src}
+          transition={{ type: "spring", stiffness: 300, damping: 22 }}
+        >
+          <Media
+            className="block rounded-[0.4cqmin] object-cover"
+            picture={picture}
+            style={box}
+          />
+        </m.figure>
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const List = ({
   slide,
   step,
@@ -134,86 +170,129 @@ const List = ({
   const waiting = slide.stepwise && step < slide.items.length;
   const accent = slide.look.accent;
   const onAccent = isDark(accent) ? "#ffffff" : "#111111";
+  // With pictures: the point that is on – the last one shown, or one
+  // tapped once they are all there – and the latest picture up to it.
+  const pictured = slide.items.some((item) => item.picture);
+  const [picked, setPicked] = useState<number | null>(null);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new step follows the last point again
+  useEffect(() => setPicked(null), [step]);
+  const latest = slide.stepwise ? Math.max(0, step - 1) : 0;
+  const on = picked ?? latest;
+  let shownPicture: { picture: Picture; index: number } | null = null;
+  for (let i = Math.min(on, slide.items.length - 1); i >= 0; i--) {
+    const picture = slide.items[i]?.picture;
+    if (picture && (!slide.stepwise || step > i)) {
+      shownPicture = { picture, index: i };
+      break;
+    }
+  }
   return (
-    <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.978cqmin]">
-      {slide.heading && <Heading text={slide.heading} />}
-      <ul className="copy flex flex-col items-start gap-[2cqmin] text-[4.4cqmin]">
-        {slide.items.map((item, i) => {
-          const shown = !slide.stepwise || step > i;
-          const next = waiting && i === step;
-          const wait = slide.stepwise ? 0 : base + 0.08 + i * 0.05;
-          return (
-            <li className="relative" key={`${i}-${item}`}>
-              {next && (
-                <span
-                  aria-hidden
-                  className="absolute inset-0 flex items-center rounded-[1.2em] border-[0.08em] border-dashed px-[0.6em] opacity-60"
-                  style={{ borderColor: "var(--ink)" }}
+    <div className="absolute inset-x-[10.667cqmin] inset-y-[9cqmin] flex items-center justify-center gap-[6cqmin] tall:flex-col-reverse tall:justify-center">
+      <div className="relative flex min-w-0 flex-1 flex-col justify-center gap-[4.978cqmin] tall:w-full tall:flex-none">
+        {slide.heading && <Heading text={slide.heading} />}
+        <ul className="copy flex flex-col items-start gap-[2cqmin] text-[4.4cqmin]">
+          {slide.items.map((item, i) => {
+            const shown = !slide.stepwise || step > i;
+            const next = waiting && i === step;
+            const wait = slide.stepwise ? 0 : base + 0.08 + i * 0.05;
+            const active = pictured && shown && i === on;
+            return (
+              <li className="relative" key={`${i}-${item.text}`}>
+                {next && (
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 flex items-center rounded-[1.2em] border-[0.08em] border-dashed px-[0.6em] opacity-60"
+                    style={{ borderColor: "var(--ink)" }}
+                  >
+                    <m.span
+                      animate={{ scale: [1, 1.15, 1], opacity: [1, 0.5, 1] }}
+                      className="grid size-[1.9em] place-items-center rounded-full text-[0.6em] font-bold"
+                      style={{ background: accent, color: onAccent }}
+                      transition={{
+                        duration: 1.4,
+                        repeat: Number.POSITIVE_INFINITY,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {i + 1}
+                    </m.span>
+                  </span>
+                )}
+                <m.span
+                  animate={
+                    shown
+                      ? {
+                          opacity: 1,
+                          x: "0cqmin",
+                          rotate: i % 2 ? 0.8 : -0.8,
+                          scale: active ? 1.06 : 1,
+                        }
+                      : { opacity: 0, x: "-40cqmin", rotate: -6, scale: 1 }
+                  }
+                  className="flex w-fit items-center gap-[0.55em] rounded-[1.2em] py-[0.38em] pr-[0.8em] pl-[0.5em] shadow-[0_0.5cqmin_1.4cqmin_-0.6cqmin_rgb(0_0_0/0.35)] data-active:outline-[0.12em] data-active:outline-(--accent) data-active:outline-solid"
+                  data-active={active || undefined}
+                  initial={{ opacity: 0, x: "-40cqmin", rotate: -6 }}
+                  style={{
+                    background: "var(--paper)",
+                    color: "var(--paper-ink)",
+                  }}
+                  transition={{
+                    default: {
+                      type: "spring",
+                      stiffness: 520,
+                      damping: 30,
+                      delay: shown ? wait : 0,
+                    },
+                    scale: { type: "spring", stiffness: 500, damping: 22 },
+                    opacity: { duration: 0.15, delay: shown ? wait : 0 },
+                  }}
                 >
                   <m.span
-                    animate={{ scale: [1, 1.15, 1], opacity: [1, 0.5, 1] }}
-                    className="grid size-[1.9em] place-items-center rounded-full text-[0.6em] font-bold"
+                    animate={
+                      shown
+                        ? { scale: 1, rotate: 0 }
+                        : { scale: 0, rotate: -90 }
+                    }
+                    className="grid size-[1.9em] flex-none place-items-center rounded-full border-[0.14em] border-white text-[0.6em] font-bold"
+                    initial={{ scale: 0, rotate: -90 }}
                     style={{ background: accent, color: onAccent }}
                     transition={{
-                      duration: 1.4,
-                      repeat: Number.POSITIVE_INFINITY,
-                      ease: "easeInOut",
+                      type: "spring",
+                      stiffness: 600,
+                      damping: 18,
+                      delay: shown ? wait + 0.06 : 0,
                     }}
                   >
                     {i + 1}
                   </m.span>
-                </span>
-              )}
-              <m.span
-                animate={
-                  shown
-                    ? { opacity: 1, x: "0cqmin", rotate: i % 2 ? 0.8 : -0.8 }
-                    : { opacity: 0, x: "-40cqmin", rotate: -6 }
-                }
-                className="flex w-fit items-center gap-[0.55em] rounded-[1.2em] py-[0.38em] pr-[0.8em] pl-[0.5em] shadow-[0_0.5cqmin_1.4cqmin_-0.6cqmin_rgb(0_0_0/0.35)]"
-                initial={{ opacity: 0, x: "-40cqmin", rotate: -6 }}
-                style={{
-                  background: "var(--paper)",
-                  color: "var(--paper-ink)",
-                }}
-                transition={{
-                  default: {
-                    type: "spring",
-                    stiffness: 520,
-                    damping: 30,
-                    delay: shown ? wait : 0,
-                  },
-                  opacity: { duration: 0.15, delay: shown ? wait : 0 },
-                }}
-              >
-                <m.span
-                  animate={
-                    shown ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -90 }
-                  }
-                  className="grid size-[1.9em] flex-none place-items-center rounded-full border-[0.14em] border-white text-[0.6em] font-bold"
-                  initial={{ scale: 0, rotate: -90 }}
-                  style={{ background: accent, color: onAccent }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 600,
-                    damping: 18,
-                    delay: shown ? wait + 0.06 : 0,
-                  }}
-                >
-                  {i + 1}
+                  <span>{item.text}</span>
                 </m.span>
-                <span>{item}</span>
-              </m.span>
-            </li>
-          );
-        })}
-      </ul>
-      {waiting && (
-        <button
-          aria-label="Show the next point"
-          className="absolute -inset-[3cqmin] cursor-pointer rounded-[3cqmin]"
-          onClick={onForward}
-          type="button"
+                {/* Once all are there, a tap on a point shows its picture. */}
+                {pictured && shown && !waiting && item.picture && (
+                  <button
+                    aria-label={`Show the picture for ${item.text}`}
+                    className="absolute inset-0 cursor-pointer rounded-[1.2em]"
+                    onClick={() => setPicked(i)}
+                    type="button"
+                  />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        {waiting && (
+          <button
+            aria-label="Show the next point"
+            className="absolute -inset-[3cqmin] cursor-pointer rounded-[3cqmin]"
+            onClick={onForward}
+            type="button"
+          />
+        )}
+      </div>
+      {pictured && shownPicture && (
+        <ListPicture
+          index={shownPicture.index}
+          picture={shownPicture.picture}
         />
       )}
     </div>

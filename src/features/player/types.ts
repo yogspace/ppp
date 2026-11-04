@@ -18,6 +18,8 @@ type SlideBase = {
   look: ThemeLook;
   /** Its own – null: the deck's. */
   transition: TransitionChoice | null;
+  /** Its next button's words – empty: the deck's. */
+  nextLabel: string;
   stickers: StickerData[];
 };
 
@@ -33,7 +35,8 @@ export type SlideData = SlideBase &
     | {
         design: "list";
         heading: string;
-        items: string[];
+        /** Each with its picture, if it has one. */
+        items: { text: string; picture: Picture | null }[];
         stepwise: boolean;
       }
     | {
@@ -84,6 +87,8 @@ export type DeckData = {
   transition: TransitionChoice;
   /** The controls at the bottom – off: the slides' own buttons only. */
   dock: boolean;
+  /** Every slide's next button's words – empty: just an arrow. */
+  nextLabel: string;
   slides: SlideData[];
   arrangement: Arrangement;
 };

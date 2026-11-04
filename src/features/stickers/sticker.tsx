@@ -16,6 +16,7 @@ import {
   clampPlacement,
   defaultPlacement,
   type Placement,
+  type Spots,
 } from "./arrangement";
 import { type StickerArt, stickerArt } from "./art";
 import { ringArea } from "./outline";
@@ -29,6 +30,8 @@ type Props = {
   stored: Placement | null;
   /** A square sticker's default width, as a share of the stage's. */
   size: number;
+  /** Where it sits by default. */
+  spots: Spots;
   /** Logged in and arranging: moves are kept (and saved). */
   arranging: boolean;
   /** Shrunk away (a card turned over). */
@@ -87,6 +90,7 @@ export const Sticker = ({
   index,
   stored,
   size,
+  spots,
   arranging,
   hidden,
   delay,
@@ -97,8 +101,8 @@ export const Sticker = ({
   const { picture } = sticker;
   const aspect = picture.width / picture.height || 1;
   const home = useMemo(
-    () => defaultPlacement(index, aspect, size),
-    [index, aspect, size]
+    () => defaultPlacement(index, aspect, size, spots),
+    [index, aspect, size, spots]
   );
   const [placement, setPlacement] = useState<Placement>(stored ?? home);
   const placementRef = useRef(placement);

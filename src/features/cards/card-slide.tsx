@@ -279,7 +279,7 @@ export const CardSlide = ({
               className="absolute inset-0 rounded-[3cqw] shadow-[0_0.8rem_1.6rem_-0.6rem_rgb(4_8_60/0.45)] backface-hidden"
               style={{ background: look.paper, color: look.paperText }}
             >
-              <div className="absolute inset-[8cqw] flex items-center justify-center overflow-hidden">
+              <div className="absolute inset-[11cqw] flex items-center justify-center">
                 {slide.headline && phase !== "sealed" && (
                   <div
                     className="headline w-max text-center whitespace-pre"
@@ -307,7 +307,8 @@ export const CardSlide = ({
                 delay={0.2}
                 hidden={phase !== "out"}
                 onArrange={onArrange}
-                size={0.24}
+                size={0.19}
+                spots="edges"
                 stickers={slide.stickers}
               />
             </div>
@@ -339,15 +340,32 @@ export const CardSlide = ({
       <AnimatePresence mode="wait">
         {(phase === "sealed" || phase === "out") && !arranging && (
           <m.p
-            animate={{ opacity: 0.75, y: 0 }}
-            className="pointer-events-none absolute bottom-[4cqmin] left-1/2 -translate-x-1/2 font-sans text-[max(13px,2cqmin)] font-semibold"
-            exit={{ opacity: 0, y: 8 }}
-            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="pointer-events-none absolute bottom-[4cqmin] left-1/2 -translate-x-1/2"
+            exit={{ opacity: 0, y: 8, scale: 0.9 }}
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
             key={phase}
             transition={{ delay: phase === "sealed" ? 1.2 : 0.6 }}
           >
-            <span className="inline-block animate-[bob_1.6s_ease-in-out_infinite]">
-              {phase === "sealed" ? "tap to open ✉︎" : "tap the card"}
+            <span
+              className="inline-flex animate-[bob_1.6s_ease-in-out_infinite] items-center gap-[0.5em] rounded-full px-[1em] py-[0.55em] font-sans text-[max(13px,2cqmin)] leading-none font-semibold whitespace-nowrap shadow-[0_0.4em_1em_-0.5em_rgb(0_0_0/0.35)]"
+              style={{ background: look.paper, color: look.paperText }}
+            >
+              {/* A finger, tapping. */}
+              <svg
+                aria-hidden
+                className="size-[1.2em]"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5V8a1.5 1.5 0 0 1 3 0v2m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1.2a6 6 0 0 1-4.6-2.2L4 16a1.6 1.6 0 0 1 2.4-2.1L9 16" />
+                <path d="M5 4.5 3.5 3M9 2V1M13 4.5 14.5 3" />
+              </svg>
+              {phase === "sealed" ? "tap to open" : "tap the card"}
             </span>
           </m.p>
         )}

@@ -42,6 +42,16 @@ const LOOK: Tab = {
         },
       ],
     },
+    {
+      name: "nextLabel",
+      type: "text",
+      label: "Own next button",
+      admin: {
+        placeholder: "Like the deck",
+        description:
+          "Words on this slide's next button. Empty: the deck's (or just an arrow).",
+      },
+    },
   ],
 };
 
@@ -136,8 +146,20 @@ export const DESIGNS: Block[] = [
       required: true,
       minRows: 1,
       labels: { singular: "Point", plural: "Points" },
-      admin: NAMED_ROWS,
-      fields: [{ name: "text", type: "text", required: true }],
+      admin: {
+        ...NAMED_ROWS,
+        description:
+          "A point may bring a picture: it shows beside the list, always in the same place, and changes with the point that is on.",
+      },
+      fields: [
+        { name: "text", type: "text", required: true },
+        {
+          name: "image",
+          type: "upload",
+          relationTo: "media",
+          admin: { description: "Optional – shown while this point is on." },
+        },
+      ],
     },
     {
       name: "stepwise",

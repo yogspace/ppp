@@ -46,6 +46,7 @@ const slideOf = (
     id: slide.id ?? `slide-${index}`,
     look: lookOf(slide.theme, deckLook),
     transition: isChoice(slide.transition) ? slide.transition : null,
+    nextLabel: slide.nextLabel?.trim() ?? "",
     stickers: stickersOf(slide.stickers),
   };
   switch (slide.blockType) {
@@ -76,7 +77,9 @@ const slideOf = (
         ...base,
         design: "list",
         heading: slide.heading ?? "",
-        items: (slide.items ?? []).map((item) => item.text).filter(Boolean),
+        items: (slide.items ?? []).flatMap((item) =>
+          item.text ? [{ text: item.text, picture: pictureOf(item.image) }] : []
+        ),
         stepwise: slide.stepwise ?? false,
       };
     case "picture":
@@ -147,6 +150,7 @@ export const deckData = (deck: Deck): DeckData => {
       ? deck.transition
       : DEFAULT_TRANSITION,
     dock: deck.dock ?? true,
+    nextLabel: deck.nextLabel?.trim() ?? "",
     slides: (deck.slides ?? []).flatMap((slide, index) => {
       const data = slideOf(slide, index, deckLook, postmark(deck.createdAt));
       return data ? [data] : [];

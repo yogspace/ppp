@@ -163,6 +163,10 @@ export interface Deck {
     | 'clock'
     | 'surprise';
   /**
+   * Words on every slide's next button, like “weiter”. Empty: just an arrow. A slide may have its own (tab Look).
+   */
+  nextLabel?: string | null;
+  /**
    * The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.
    */
   dock?: boolean | null;
@@ -217,6 +221,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'poster';
@@ -269,6 +277,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'cover';
@@ -331,14 +343,25 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'words';
       }
     | {
         heading?: string | null;
+        /**
+         * A point may bring a picture: it shows beside the list, always in the same place, and changes with the point that is on.
+         */
         items: {
           text: string;
+          /**
+           * Optional – shown while this point is on.
+           */
+          image?: (string | null) | Media;
           id?: string | null;
         }[];
         stepwise?: boolean | null;
@@ -383,6 +406,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'list';
@@ -435,6 +462,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'picture';
@@ -502,6 +533,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'split';
@@ -577,6 +612,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'gallery';
@@ -625,6 +664,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'quote';
@@ -692,6 +735,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'card';
@@ -738,6 +785,10 @@ export interface Deck {
               | 'surprise'
             )
           | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
         id?: string | null;
         blockName?: string | null;
         blockType: 'blank';
@@ -1003,6 +1054,7 @@ export interface DecksSelect<T extends boolean = true> {
   slug?: T;
   theme?: T;
   transition?: T;
+  nextLabel?: T;
   dock?: T;
   slides?:
     | T
@@ -1020,6 +1072,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1037,6 +1090,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1053,6 +1107,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1064,6 +1119,7 @@ export interface DecksSelect<T extends boolean = true> {
                 | T
                 | {
                     text?: T;
+                    image?: T;
                     id?: T;
                   };
               stepwise?: T;
@@ -1075,6 +1131,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1092,6 +1149,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1110,6 +1168,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1135,6 +1194,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1151,6 +1211,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1171,6 +1232,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };
@@ -1185,6 +1247,7 @@ export interface DecksSelect<T extends boolean = true> {
                   };
               theme?: T;
               transition?: T;
+              nextLabel?: T;
               id?: T;
               blockName?: T;
             };

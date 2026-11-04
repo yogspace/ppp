@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import type { StickerData } from "@/features/player/types";
-import type { Arrangement, Placement } from "./arrangement";
+import type { Arrangement, Placement, Spots } from "./arrangement";
 import { Sticker } from "./sticker";
 
 type Props = {
@@ -10,6 +10,8 @@ type Props = {
   arrangement: Arrangement;
   /** A square sticker's default width, as a share of the stage's. */
   size?: number;
+  /** Where they sit by default: over the slide, or along its edges. */
+  spots?: Spots;
   arranging?: boolean;
   hidden?: boolean;
   /** Seconds before they fly in, one after another. */
@@ -27,6 +29,7 @@ export const StickerLayer = ({
   stickers,
   arrangement,
   size = 0.15,
+  spots = "slide",
   arranging = false,
   hidden = false,
   delay = 0.4,
@@ -48,6 +51,7 @@ export const StickerLayer = ({
           onArrange={onArrange}
           scale={scale}
           size={size}
+          spots={spots}
           sticker={sticker}
           stored={arrangement[sticker.id] ?? null}
         />
