@@ -19,6 +19,17 @@ const NAMES: Record<Exclude<Onward, null>, string> = {
 };
 
 const SPRING = { type: "spring", stiffness: 420, damping: 15 } as const;
+
+/** A way that waits (the slide still on its way): dimmed, pressed in. */
+const waitStyle = (waiting: boolean) =>
+  ({
+    display: "inline-block",
+    opacity: waiting ? 0.5 : 1,
+    scale: waiting ? 0.88 : 1,
+    transition: waiting
+      ? "opacity 0.15s ease, scale 0.15s ease"
+      : "opacity 0.25s ease, scale 0.35s cubic-bezier(0.3, 1.6, 0.5, 1)",
+  }) as const;
 const ICON_SPRING = { type: "spring", stiffness: 500, damping: 18 } as const;
 
 /** › a step, → on to the next slide, ↺ again from the start. */
@@ -105,15 +116,12 @@ export const SlideNav = ({
       className="pointer-events-none absolute inset-x-[3cqmin] bottom-[3cqmin] z-30 flex items-end justify-between"
       data-controls
     >
-      <span>
+      {/* Waiting for the slide to arrive: pressed in a little, then back. */}
+      <span style={waitStyle(waitBack)}>
         <AnimatePresence>
           {back && (
             <m.button
-              animate={
-                waitBack
-                  ? { scale: 0.86, opacity: 0.45 }
-                  : { scale: 1, opacity: 1 }
-              }
+              animate={{ scale: 1, opacity: 1 }}
               aria-label="Back"
               className="pointer-events-auto grid size-[max(44px,6cqmin)] place-items-center rounded-full backdrop-blur-sm"
               disabled={!present}
@@ -145,15 +153,14 @@ export const SlideNav = ({
           )}
         </AnimatePresence>
       </span>
-      <span className="animate-[bob_2.6s_ease-in-out_infinite]">
+      <span
+        className="animate-[bob_2.6s_ease-in-out_infinite]"
+        style={waitStyle(waitOn)}
+      >
         <AnimatePresence mode="popLayout">
           {onward && ready && (
             <m.button
-              animate={
-                waitOn
-                  ? { scale: 0.88, rotate: -3, opacity: 0.55 }
-                  : { scale: 1, rotate: -3, opacity: 1 }
-              }
+              animate={{ scale: 1, rotate: -3, opacity: 1 }}
               aria-label={words ? undefined : NAMES[onward]}
               className={cn(
                 "copy pointer-events-auto relative inline-flex items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",
