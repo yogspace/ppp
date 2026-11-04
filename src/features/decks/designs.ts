@@ -174,7 +174,6 @@ export const DESIGNS: Block[] = [
     {
       name: "fit",
       type: "select",
-      required: true,
       defaultValue: "framed",
       options: [
         { label: "Framed – flies in, a little tilted", value: "framed" },
@@ -220,7 +219,6 @@ export const DESIGNS: Block[] = [
       {
         name: "layout",
         type: "select",
-        required: true,
         defaultValue: "pile",
         options: [
           {

@@ -35,6 +35,8 @@ type Props = {
   onArrange?: (id: string, placement: Placement | null) => void;
   /** A tap that is the slide's next step (a point shown, a picture thrown). */
   onStep: () => void;
+  /** It has arrived: its transition done, nothing over it. */
+  onSettled?: () => void;
 };
 
 /** On a tall screen (a phone held upright) stickers are this much bigger. */
@@ -54,6 +56,7 @@ export const SlideFrame = ({
   arranging,
   onArrange,
   onStep,
+  onSettled,
 }: Props) => {
   const [own] = useState(move);
   const spec = specOf(own.kind);
@@ -84,6 +87,10 @@ export const SlideFrame = ({
     return () => window.clearTimeout(timer);
   }, [spec.reveal, spec.cover]);
   const still = present && landed && uncovered;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, when still
+  useEffect(() => {
+    if (still) onSettled?.();
+  }, [still]);
 
   return (
     <m.section

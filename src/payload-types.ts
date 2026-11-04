@@ -424,7 +424,7 @@ export interface Deck {
          */
         image: string | Media;
         caption?: string | null;
-        fit: 'framed' | 'full';
+        fit?: ('framed' | 'full') | null;
         /**
          * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
@@ -573,7 +573,7 @@ export interface Deck {
           caption?: string | null;
           id?: string | null;
         }[];
-        layout: 'pile' | 'stack';
+        layout?: ('pile' | 'stack') | null;
         side?: ('right' | 'left') | null;
         /**
          * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.

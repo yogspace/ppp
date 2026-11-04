@@ -67,6 +67,9 @@ type Props = {
   ready: boolean;
   /** How far through its steps the slide is, 0 to 1 – shown while it has some left. */
   progress: number;
+  /** The way on, the way back lead to another slide that can't come yet. */
+  waitOn?: boolean;
+  waitBack?: boolean;
   /** Seconds after the slide arrived. */
   delay: number;
   onOn: () => void;
@@ -87,6 +90,8 @@ export const SlideNav = ({
   back,
   ready,
   progress,
+  waitOn = false,
+  waitBack = false,
   delay,
   onOn,
   onBack,
@@ -104,7 +109,11 @@ export const SlideNav = ({
         <AnimatePresence>
           {back && (
             <m.button
-              animate={{ scale: 1, opacity: 1 }}
+              animate={
+                waitBack
+                  ? { scale: 0.86, opacity: 0.45 }
+                  : { scale: 1, opacity: 1 }
+              }
               aria-label="Back"
               className="pointer-events-auto grid size-[max(44px,6cqmin)] place-items-center rounded-full backdrop-blur-sm"
               disabled={!present}
@@ -140,7 +149,11 @@ export const SlideNav = ({
         <AnimatePresence mode="popLayout">
           {onward && ready && (
             <m.button
-              animate={{ scale: 1, rotate: -3, opacity: 1 }}
+              animate={
+                waitOn
+                  ? { scale: 0.88, rotate: -3, opacity: 0.55 }
+                  : { scale: 1, rotate: -3, opacity: 1 }
+              }
               aria-label={words ? undefined : NAMES[onward]}
               className={cn(
                 "copy pointer-events-auto relative inline-flex items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",

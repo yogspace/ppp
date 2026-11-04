@@ -96,11 +96,27 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     deck.arrangement
   );
 
+  // On to another slide only once this one has arrived (its transition
+  // done – SlideFrame says so): clicks meanwhile wait, the last one goes then.
+  // Steps within a slide never wait.
+  const settledRef = useRef(true);
+  const [settled, setSettled] = useState(true);
+  const pending = useRef<(() => Pos) | null>(null);
+  const settleTimer = useRef(0);
+
   const goTo = useCallback(
     (next: Pos, { history = "push" }: { history?: "push" | "none" } = {}) => {
       const current = posRef.current;
       if (next.slide === current.slide && next.step === current.step) return;
       if (next.slide !== current.slide) {
+        settledRef.current = false;
+        setSettled(false);
+        // Never stuck: at most this long.
+        window.clearTimeout(settleTimer.current);
+        settleTimer.current = window.setTimeout(
+          () => settleRef.current(),
+          1600
+        );
         setMove((m) => ({
           kind: resolveTransition(
             slides[next.slide]?.transition,
@@ -121,17 +137,43 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     [slides, deck.transition, deck.slug]
   );
 
+  /** A move asked for: now, or – to another slide, mid-transition – later. */
+  const ask = useCallback(
+    (target: () => Pos) => {
+      if (target().slide !== posRef.current.slide && !settledRef.current) {
+        pending.current = target;
+        return;
+      }
+      goTo(target());
+    },
+    [goTo]
+  );
+
+  /** The slide has arrived: a click that waited goes now. */
+  const settle = useCallback(() => {
+    window.clearTimeout(settleTimer.current);
+    if (settledRef.current) return;
+    settledRef.current = true;
+    setSettled(true);
+    const waiting = pending.current;
+    pending.current = null;
+    if (waiting) goTo(waiting());
+  }, [goTo]);
+  // `settle` is used by goTo before it is made: kept in a ref for it.
+  const settleRef = useRef(settle);
+  settleRef.current = settle;
+
   const next = useCallback(
-    () => goTo(forward(steps, posRef.current)),
-    [goTo, steps]
+    () => ask(() => forward(steps, posRef.current)),
+    [ask, steps]
   );
   const prev = useCallback(
-    () => goTo(backward(steps, posRef.current)),
-    [goTo, steps]
+    () => ask(() => backward(steps, posRef.current)),
+    [ask, steps]
   );
   const to = useCallback(
-    (slide: number) => goTo(jump(steps, slide)),
-    [goTo, steps]
+    (slide: number) => ask(() => jump(steps, slide)),
+    [ask, steps]
   );
 
   // The browser's back and forward: to the slide its address names.
@@ -279,6 +321,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                   key={slide.id}
                   move={move}
                   onArrange={canArrange ? arrange : undefined}
+                  onSettled={settle}
                   onStep={next}
                   slide={slide}
                   step={pos.step}
@@ -296,6 +339,10 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                 onward={onward}
                 progress={total ? pos.step / total : 1}
                 ready={ready}
+                // Mid-transition, the ways to another slide wait (a click is kept):
+                // pressed in a little until the slide has arrived.
+                waitBack={!settled && pos.step === 0}
+                waitOn={!settled && onward !== "point"}
               />
             </Stage>
           </AroundStage>
