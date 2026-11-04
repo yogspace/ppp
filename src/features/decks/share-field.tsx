@@ -13,16 +13,19 @@ const styles = {
     fontSize: "0.8rem",
     color: "var(--theme-elevation-600)",
   },
+  row: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
+  side: { display: "flex", flex: 1, minWidth: 0, flexDirection: "column" },
   code: {
     display: "block",
-    width: "100%",
-    aspectRatio: "1",
+    flex: "none",
+    width: 88,
+    height: 88,
     borderRadius: "var(--style-radius-m)",
     border: "1px solid var(--theme-elevation-100)",
     background: COLORS.light,
   },
   url: {
-    margin: "0.5rem 0 0.75rem",
+    margin: "0 0 0.5rem",
     fontFamily: "ui-monospace, monospace",
     fontSize: "0.75rem",
     overflowWrap: "anywhere",
@@ -102,70 +105,76 @@ export const ShareField = () => {
   return (
     <div style={styles.box}>
       <p style={styles.label}>Share</p>
-      {svg && (
-        <img
-          alt={`QR code for ${url}`}
-          src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`}
-          style={styles.code}
-        />
-      )}
-      <p style={styles.url}>{url}</p>
-      <div style={styles.buttons}>
-        <Button
-          buttonStyle="secondary"
-          margin={false}
-          onClick={async () => {
-            await navigator.clipboard.writeText(url);
-            say("link");
-          }}
-          size="small"
-        >
-          {done === "link" ? "Copied ✓" : "Copy link"}
-        </Button>
-        <Button
-          buttonStyle="secondary"
-          margin={false}
-          onClick={async () => {
-            try {
-              const blob = await (await fetch(await png())).blob();
-              await navigator.clipboard.write([
-                new ClipboardItem({ "image/png": blob }),
-              ]);
-              say("code");
-            } catch {
-              say("no-copy");
-            }
-          }}
-          size="small"
-        >
-          {done === "code"
-            ? "Copied ✓"
-            : done === "no-copy"
-              ? "Not here ✗"
-              : "Copy QR"}
-        </Button>
-        <Button
-          buttonStyle="secondary"
-          margin={false}
-          onClick={async () => save(await png(), `${slug}-qr.png`)}
-          size="small"
-        >
-          PNG ↓
-        </Button>
-        <Button
-          buttonStyle="secondary"
-          margin={false}
-          onClick={() => {
-            const href = URL.createObjectURL(
-              new Blob([svg], { type: "image/svg+xml" })
-            );
-            save(href, `${slug}-qr.svg`);
-            window.setTimeout(() => URL.revokeObjectURL(href), 1000);
-          }}
-          size="small"
-        >
-          SVG ↓
-        </Button>
+      <div style={styles.row}>
+        {svg ? (
+          <img
+            alt={`QR code for ${url}`}
+            src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`}
+            style={styles.code}
+          />
+        ) : (
+          <span style={styles.code} />
+        )}
+        <div style={styles.side}>
+          <p style={styles.url}>{url}</p>
+          <div style={styles.buttons}>
+            <Button
+              buttonStyle="secondary"
+              margin={false}
+              onClick={async () => {
+                await navigator.clipboard.writeText(url);
+                say("link");
+              }}
+              size="small"
+            >
+              {done === "link" ? "Copied ✓" : "Copy link"}
+            </Button>
+            <Button
+              buttonStyle="secondary"
+              margin={false}
+              onClick={async () => {
+                try {
+                  const blob = await (await fetch(await png())).blob();
+                  await navigator.clipboard.write([
+                    new ClipboardItem({ "image/png": blob }),
+                  ]);
+                  say("code");
+                } catch {
+                  say("no-copy");
+                }
+              }}
+              size="small"
+            >
+              {done === "code"
+                ? "Copied ✓"
+                : done === "no-copy"
+                  ? "Not here ✗"
+                  : "Copy QR"}
+            </Button>
+            <Button
+              buttonStyle="secondary"
+              margin={false}
+              onClick={async () => save(await png(), `${slug}-qr.png`)}
+              size="small"
+            >
+              PNG ↓
+            </Button>
+            <Button
+              buttonStyle="secondary"
+              margin={false}
+              onClick={() => {
+                const href = URL.createObjectURL(
+                  new Blob([svg], { type: "image/svg+xml" })
+                );
+                save(href, `${slug}-qr.svg`);
+                window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+              }}
+              size="small"
+            >
+              SVG ↓
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

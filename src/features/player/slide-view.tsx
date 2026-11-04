@@ -5,7 +5,7 @@ import { type CSSProperties, useContext, useState } from "react";
 import type { Picture } from "@/features/media/picture";
 import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
-import { BOUNCY, Enter, EnterDelay, useFit, Words } from "./enter";
+import { Enter, EnterDelay, useFit, Words } from "./enter";
 import { Rich } from "./rich";
 import { useStageSize } from "./stage";
 import type { SlideData } from "./types";
@@ -128,46 +128,77 @@ const List = ({
   step: number;
   onForward: () => void;
 }) => {
-  // One point per tap: the list itself is the button, a dot pulses where
-  // the next point lands.
+  // One point per tap: the list itself is the button; where the next point
+  // lands, its chip waits as a dashed outline, its number pulsing.
+  const base = useContext(EnterDelay);
   const waiting = slide.stepwise && step < slide.items.length;
+  const accent = slide.look.accent;
+  const onAccent = isDark(accent) ? "#ffffff" : "#111111";
   return (
     <div className="absolute inset-x-[14.222cqmin] inset-y-[10.667cqmin] flex flex-col justify-center gap-[4.978cqmin]">
       {slide.heading && <Heading text={slide.heading} />}
-      <ul className="copy flex flex-col gap-[2.311cqmin] text-[4.978cqmin]">
+      <ul className="copy flex flex-col items-start gap-[2cqmin] text-[4.4cqmin]">
         {slide.items.map((item, i) => {
           const shown = !slide.stepwise || step > i;
+          const next = waiting && i === step;
+          const wait = slide.stepwise ? 0 : base + 0.15 + i * 0.06;
           return (
             <li className="relative" key={`${i}-${item}`}>
-              {waiting && i === step && (
-                <m.i
-                  animate={{ scale: [1, 1.6, 1], opacity: [0.9, 0.3, 0.9] }}
+              {next && (
+                <span
                   aria-hidden
-                  className="absolute top-[0.45em] left-0 block size-[0.55em] rounded-full"
-                  style={{ background: "var(--accent)" }}
-                  transition={{
-                    duration: 1.4,
-                    repeat: Number.POSITIVE_INFINITY,
-                    ease: "easeInOut",
-                  }}
-                />
+                  className="absolute inset-0 flex items-center rounded-[1.2em] border-[0.08em] border-dashed px-[0.6em] opacity-60"
+                  style={{ borderColor: "var(--ink)" }}
+                >
+                  <m.span
+                    animate={{ scale: [1, 1.15, 1], opacity: [1, 0.5, 1] }}
+                    className="grid size-[1.9em] place-items-center rounded-full text-[0.6em] font-bold"
+                    style={{ background: accent, color: onAccent }}
+                    transition={{
+                      duration: 1.4,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                    }}
+                  >
+                    {i + 1}
+                  </m.span>
+                </span>
               )}
-              <Enter
-                className="flex items-baseline gap-[2.489cqmin]"
-                delay={slide.stepwise ? 0 : 0.3 + i * 0.12}
-                kind="left"
-                shown={shown}
+              <m.span
+                animate={
+                  shown
+                    ? { opacity: 1, y: "0%", scale: 1 }
+                    : { opacity: 0, y: "40%", scale: 0.94 }
+                }
+                className="flex w-fit items-center gap-[0.55em] rounded-[1.2em] py-[0.38em] pr-[0.8em] pl-[0.5em] shadow-[0_0.5cqmin_1.4cqmin_-0.6cqmin_rgb(0_0_0/0.35)]"
+                initial={{ opacity: 0, y: "40%", scale: 0.94 }}
+                style={{
+                  background: "var(--paper)",
+                  color: "var(--paper-ink)",
+                  rotate: i % 2 ? 0.8 : -0.8,
+                }}
+                transition={{
+                  duration: 0.26,
+                  ease: [0.2, 0.8, 0.2, 1],
+                  delay: shown ? wait : 0,
+                }}
               >
-                <m.i
-                  animate={{ scale: 1, rotate: 0 }}
-                  aria-hidden
-                  className="relative top-[-0.12em] block size-[0.55em] flex-none rounded-full"
-                  initial={{ scale: 0, rotate: -90 }}
-                  style={{ background: "var(--accent)" }}
-                  transition={{ ...BOUNCY, delay: 0.1 }}
-                />
+                <m.span
+                  animate={shown ? { scale: 1 } : { scale: 0 }}
+                  className="grid size-[1.9em] flex-none place-items-center rounded-full border-[0.14em] border-white text-[0.6em] font-bold"
+                  initial={{ scale: 0 }}
+                  style={{ background: accent, color: onAccent }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 600,
+                    damping: 18,
+                    delay: shown ? wait + 0.06 : 0,
+                  }}
+                >
+                  {i + 1}
+                </m.span>
                 <span>{item}</span>
-              </Enter>
+              </m.span>
             </li>
           );
         })}

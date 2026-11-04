@@ -14,10 +14,8 @@ import {
 } from "@/features/transitions/frames";
 import { revealClip } from "@/features/transitions/reveal";
 import { EnterDelay } from "./enter";
-import { type Onward, SlideNav } from "./slide-nav";
 import { SlideView } from "./slide-view";
 import { useStageSize } from "./stage";
-import { stepsOf } from "./steps";
 import type { SlideData } from "./types";
 
 type Props = {
@@ -28,13 +26,8 @@ type Props = {
   arrangement: Arrangement;
   arranging: boolean;
   onArrange?: (id: string, placement: Placement | null) => void;
-  /** Its button's way on, and whether there is a way back. */
-  onward: Onward;
-  /** Been here before (the deck went past it): its buttons show at once. */
-  seen: boolean;
-  back: boolean;
-  onOn: () => void;
-  onBack: () => void;
+  /** A tap that is the slide's next step (a point shown, a picture thrown). */
+  onStep: () => void;
 };
 
 /** On a tall screen (a phone held upright) stickers are this much bigger. */
@@ -42,8 +35,8 @@ const TALL_STICKERS = 1.7;
 
 /**
  * One slide on the stage: in its theme, over its background, its things
- * flying in once the transition brought it, its stickers on top, its own
- * button on (slide-nav.tsx). It comes and goes by its move
+ * flying in once the transition brought it, its stickers on top (its
+ * buttons stay on the stage, slide-nav.tsx). It comes and goes by its move
  * (transitions/frames.ts); a wipe shows it through a growing shape.
  */
 export const SlideFrame = ({
@@ -53,23 +46,9 @@ export const SlideFrame = ({
   arrangement,
   arranging,
   onArrange,
-  onward,
-  seen,
-  back,
-  onOn,
-  onBack,
+  onStep,
 }: Props) => {
   const [own] = useState(move);
-  // A slide that wants to be played with – a List point by point, a stack
-  // thrown away, a Card opened – shows its ways on and back once that is
-  // done, and keeps them then.
-  const steps = stepsOf(slide);
-  const [done, setDone] = useState(
-    seen || (slide.design !== "card" && steps === 0)
-  );
-  useEffect(() => {
-    if (steps > 0 && step >= steps) setDone(true);
-  }, [step, steps]);
   const spec = specOf(own.kind);
   const { width, height } = useStageSize();
   const progress = useMotionValue(spec.reveal ? 0 : 1);
@@ -104,12 +83,13 @@ export const SlideFrame = ({
             arrangement={arrangement}
             arranging={arranging}
             onArrange={onArrange}
-            onOpened={() => setDone(true)}
+            onStep={onStep}
             slide={slide}
+            step={step}
           />
         ) : (
           <>
-            <SlideView onForward={onOn} slide={slide} step={step} />
+            <SlideView onForward={onStep} slide={slide} step={step} />
             <StickerLayer
               arrangement={arrangement}
               arranging={arranging}
@@ -120,16 +100,6 @@ export const SlideFrame = ({
             />
           </>
         )}
-        <SlideNav
-          back={back}
-          delay={seen ? spec.settle - 0.6 : spec.settle}
-          look={slide.look}
-          onBack={onBack}
-          onOn={onOn}
-          onward={onward}
-          point={slide.design === "gallery" ? "next picture" : "next point"}
-          ready={done}
-        />
       </EnterDelay.Provider>
     </m.section>
   );

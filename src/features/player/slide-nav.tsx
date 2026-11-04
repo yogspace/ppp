@@ -25,7 +25,8 @@ type Props = {
   back: boolean;
   /**
    * The slide was played through – its points shown, its stack thrown, its
-   * Card opened: the buttons may come (and stay).
+   * Card opened: the way on may come (and stays). The way back is always
+   * there, past the first slide.
    */
   ready: boolean;
   /** Seconds after the slide arrived. */
@@ -60,7 +61,7 @@ export const SlideNav = ({
     >
       <span>
         <AnimatePresence>
-          {back && ready && (
+          {back && (
             <m.button
               animate={{ scale: 1, opacity: 1 }}
               aria-label="Back"
@@ -73,7 +74,7 @@ export const SlideNav = ({
                 background: `color-mix(in oklab, ${look.text} 10%, transparent)`,
                 color: look.text,
               }}
-              transition={{ ...SPRING, delay: delay + 0.9 }}
+              transition={{ ...SPRING, delay: delay + 0.4 }}
               type="button"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.85 }}

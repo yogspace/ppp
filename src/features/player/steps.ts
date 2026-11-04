@@ -8,13 +8,16 @@ export type Pos = { slide: number; step: number };
 
 /**
  * The clicks a slide holds before the next one comes: a List's points one
- * by one, a stacked Gallery's pictures thrown away one by one.
+ * by one, a stacked Gallery's pictures thrown away one by one, a Card
+ * opened and folded open.
  */
 export const stepsOf = (slide: SlideData) => {
   if (slide.design === "list" && slide.stepwise) return slide.items.length;
   if (slide.design === "gallery" && slide.layout === "stack") {
     return slide.pictures.length;
   }
+  // A Card: out of its envelope, then folded open.
+  if (slide.design === "card") return 2;
   return 0;
 };
 

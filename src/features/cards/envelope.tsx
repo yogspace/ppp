@@ -171,9 +171,9 @@ export const EnvelopeFront = ({
         ? { scaleX: 1, y: "0%", rotate: -3, opacity: 1 }
         : { scaleX: 0, y: "0%", rotate: -3, opacity: 1 }
     }
-    className="absolute z-50 rounded-[2.4cqw] p-[2.2cqw] shadow-[0_1.4cqw_3cqw_-1cqw_rgb(4_8_60/0.45)]"
+    className="absolute z-50"
     initial={{ scaleX: 1, rotate: -16, y: "-40%", opacity: 0 }}
-    style={{ ...ENVELOPE, background: airmail(look) }}
+    style={ENVELOPE}
     transition={
       phase === "sealed"
         ? {
@@ -188,24 +188,53 @@ export const EnvelopeFront = ({
         : { duration: 0.22, ease: "easeIn" }
     }
   >
-    <div
-      className="relative size-full rounded-[1.2cqw]"
-      style={{ background: look.paper, color: look.paperText }}
+    {/* Now and then it hops and wiggles – open me! */}
+    <m.div
+      animate={
+        phase === "sealed"
+          ? {
+              y: ["0%", "-9%", "0%", "-3%", "0%"],
+              rotate: [0, -3.5, 2.5, -1, 0],
+              scale: [1, 1.04, 0.99, 1.01, 1],
+            }
+          : { y: "0%", rotate: 0, scale: 1 }
+      }
+      className="absolute inset-0 rounded-[2.4cqw] p-[2.2cqw] shadow-[0_1.4cqw_3cqw_-1cqw_rgb(4_8_60/0.45)]"
+      style={{ background: airmail(look) }}
+      transition={
+        phase === "sealed"
+          ? {
+              duration: 0.8,
+              times: [0, 0.3, 0.55, 0.78, 1],
+              ease: "easeInOut",
+              repeat: Number.POSITIVE_INFINITY,
+              repeatDelay: 2.4,
+              delay: 1.6,
+            }
+          : { duration: 0 }
+      }
     >
-      <Stamp look={look} picture={stamp} />
-      <Postmark date={posted} ink={look.paperText} />
-      <div className="absolute inset-x-[10cqw] bottom-[13cqw] text-left">
-        <p className="headline text-[11cqw]">{to ? `For ${to}` : "For you"}</p>
-        <i
-          className="mt-[2cqw] block h-[0.4cqw] w-[70%] rounded-full opacity-25"
-          style={{ background: look.paperText }}
-        />
-        <i
-          className="mt-[3.4cqw] block h-[0.4cqw] w-[50%] rounded-full opacity-25"
-          style={{ background: look.paperText }}
-        />
+      <div
+        className="relative size-full rounded-[1.2cqw]"
+        style={{ background: look.paper, color: look.paperText }}
+      >
+        <Stamp look={look} picture={stamp} />
+        <Postmark date={posted} ink={look.paperText} />
+        <div className="absolute inset-x-[10cqw] bottom-[13cqw] text-left">
+          <p className="headline text-[11cqw]">
+            {to ? `For ${to}` : "For you"}
+          </p>
+          <i
+            className="mt-[2cqw] block h-[0.4cqw] w-[70%] rounded-full opacity-25"
+            style={{ background: look.paperText }}
+          />
+          <i
+            className="mt-[3.4cqw] block h-[0.4cqw] w-[50%] rounded-full opacity-25"
+            style={{ background: look.paperText }}
+          />
+        </div>
       </div>
-    </div>
+    </m.div>
   </m.div>
 );
 

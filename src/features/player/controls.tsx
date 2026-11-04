@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, m } from "motion/react";
-import { useEffect, useState } from "react";
+import { type RefObject, useEffect, useRef, useState } from "react";
 import type { SaveState } from "@/features/stickers/use-arrange";
 import { cn } from "@/lib/cn";
 
@@ -25,19 +25,21 @@ const Icon = ({ d }: { d: string }) => (
 const button =
   "grid size-11 place-items-center rounded-full transition-[scale,background-color] duration-200 ease-spring hover:bg-white/15 active:scale-90 disabled:opacity-30";
 
-/** The mouse this close to the bottom edge (px) brings the controls up … */
-const DOCK_IN = 72;
-/** … and this far up (px) – or out of the window – sends them away. */
-const DOCK_OUT = 150;
-/** How long they stay after the mouse left (ms) – no flicker. */
+/** The mouse this close to the bottom edge (px) … */
+const DOCK_IN = 56;
+/** … and this close beside the controls (px) brings them up; */
+const DOCK_BESIDE = 72;
+/** this far up (px) – or out of the window – sends them away again, */
+const DOCK_OUT = 140;
+/** a moment later (ms) – no flicker. */
 const DOCK_LINGER = 450;
 
 /**
- * Like macOS's dock: the mouse at the screen's bottom edge brings the
- * controls up, moving away lets them go again a moment later. Only a mouse
- * – a finger has the long press.
+ * Like macOS's dock: the mouse right at the bottom edge, below the controls
+ * (give or take a little), brings them up; moving away lets them go again a
+ * moment later. Only a mouse – a finger has the long press.
  */
-const useDock = () => {
+const useDock = (ref: RefObject<HTMLElement | null>) => {
   const [up, setUp] = useState(false);
   useEffect(() => {
     let timer = 0;
@@ -48,10 +50,12 @@ const useDock = () => {
     const move = (event: PointerEvent) => {
       if (event.pointerType !== "mouse") return;
       const fromBottom = window.innerHeight - event.clientY;
-      if (fromBottom <= DOCK_IN) {
+      const half = (ref.current?.offsetWidth ?? 320) / 2 + DOCK_BESIDE;
+      const beside = Math.abs(event.clientX - window.innerWidth / 2) <= half;
+      if (fromBottom <= DOCK_IN && beside) {
         window.clearTimeout(timer);
         setUp(true);
-      } else if (fromBottom > DOCK_OUT) {
+      } else if (fromBottom > DOCK_OUT || !beside) {
         away();
       }
     };
@@ -62,7 +66,7 @@ const useDock = () => {
       window.removeEventListener("pointermove", move);
       document.documentElement.removeEventListener("pointerleave", away);
     };
-  }, []);
+  }, [ref]);
   return up;
 };
 
@@ -103,7 +107,8 @@ export const Controls = ({
     document.addEventListener("fullscreenchange", change);
     return () => document.removeEventListener("fullscreenchange", change);
   }, []);
-  const docked = useDock();
+  const dockRef = useRef<HTMLElement>(null);
+  const docked = useDock(dockRef);
   const shown = asked || docked || arranging;
 
   return (
@@ -158,6 +163,7 @@ export const Controls = ({
         )}
         data-controls
         initial={false}
+        ref={dockRef}
         transition={SPRING}
       >
         {count <= 24 ? (

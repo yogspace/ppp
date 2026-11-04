@@ -365,7 +365,10 @@ export class StickerRenderer {
     // The shadow lies on the slide: under the sticker, further off when
     // lifted, softer and lighter.
     const off = size * (0.018 + lift * 0.025);
-    entry.shadow.position.set(off * 0.5, -off, -size * 0.06);
+    // Far enough behind that no tip of a leaning sticker ever dips past it
+    // (a lean of ~0.5 rad moves a tip ~0.3 of the size back) – else the
+    // shadow, drawn after it, would lie on top of that tip.
+    entry.shadow.position.set(off * 0.5, -off, -size * 0.45);
     entry.shadow.rotation.set(0, 0, roll);
     entry.shadow.scale.setScalar(size * (1 + lift * 0.05));
     (entry.shadow.material as THREE.MeshBasicMaterial).opacity =

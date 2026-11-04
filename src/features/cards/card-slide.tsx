@@ -73,8 +73,12 @@ type Props = {
   arrangement: Arrangement;
   arranging: boolean;
   onArrange?: (id: string, placement: Placement | null) => void;
-  /** The card was folded open – the slide's way on may show. */
-  onOpened: () => void;
+  /**
+   * The deck's steps on this slide (steps.ts): 0 sealed, 1 out of its
+   * envelope, 2 folded open. A tap is the next step; ← goes a step back.
+   */
+  step: number;
+  onStep: () => void;
 };
 
 /**
@@ -89,10 +93,14 @@ export const CardSlide = ({
   arrangement,
   arranging,
   onArrange,
-  onOpened,
+  step,
+  onStep,
 }: Props) => {
   const look = slide.look;
-  const [phase, setPhase] = useState<Phase>("sealed");
+  // Back here having seen it (step 2): open at once, no envelope.
+  const [phase, setPhase] = useState<Phase>(
+    step >= 2 ? "open" : step === 1 ? "out" : "sealed"
+  );
   const [opens, setOpens] = useState(0);
   const headline = useFit(`${slide.headline}-${phase === "sealed"}`, {
     max: 30,
@@ -102,21 +110,32 @@ export const CardSlide = ({
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  // The phase follows the deck's step: on – the envelope opens (its show
+  // first), the card folds open; back – it folds shut, back in its envelope.
+  useEffect(() => {
+    window.clearTimeout(timer.current);
+    setPhase((current) => {
+      if (step >= 2) {
+        if (current !== "open") setOpens((n) => n + 1);
+        return "open";
+      }
+      if (step === 1) {
+        if (current === "sealed") {
+          timer.current = window.setTimeout(() => setPhase("out"), OPENING);
+          return "opening";
+        }
+        return current === "opening" ? current : "out";
+      }
+      return "sealed";
+    });
+  }, [step]);
+
   const openEnvelope = () => {
-    if (phase !== "sealed") return;
-    setPhase("opening");
-    timer.current = window.setTimeout(() => setPhase("out"), OPENING);
+    if (phase === "sealed") onStep();
   };
 
   const fold = () => {
-    if (arranging) return;
-    if (phase === "out") {
-      setPhase("open");
-      setOpens((n) => n + 1);
-      onOpened();
-    } else if (phase === "open") {
-      setPhase("out");
-    }
+    if (!arranging && phase === "out") onStep();
   };
 
   // Arranging: the card lies shut, its front up.
@@ -173,7 +192,16 @@ export const CardSlide = ({
                     opacity: [0, 1, 1, 1, 1],
                     zIndex: [20, 20, 20, 60, 60],
                   }
-                : { y: "0%", scale: 1, opacity: 1, zIndex: 60 }
+                : phase === "out" && !arranging
+                  ? // Out and shut: now and then it hops forward – open me!
+                    {
+                      y: ["0%", "-7%", "0%", "-2.5%", "0%"],
+                      scale: [1, 1.07, 0.99, 1.025, 1],
+                      rotate: [0, -2.5, 1.5, -0.5, 0],
+                      opacity: 1,
+                      zIndex: 60,
+                    }
+                  : { y: "0%", scale: 1, rotate: 0, opacity: 1, zIndex: 60 }
           }
           className="absolute inset-x-0 top-[75cqw] h-[75cqw] perspective-[260cqw]"
           initial={false}
@@ -184,7 +212,18 @@ export const CardSlide = ({
                   times: [0, 0.18, 0.62, 0.7, 1],
                   ease: "easeInOut",
                 }
-              : { type: "spring", stiffness: 160, damping: 18 }
+              : phase === "out" && !arranging
+                ? {
+                    duration: 0.85,
+                    ease: "easeInOut",
+                    times: [0, 0.3, 0.55, 0.78, 1],
+                    repeat: Number.POSITIVE_INFINITY,
+                    repeatDelay: 2.2,
+                    delay: 1.4,
+                    opacity: { duration: 0 },
+                    zIndex: { duration: 0 },
+                  }
+                : { type: "spring", stiffness: 160, damping: 18 }
           }
         >
           {/* Inside: the message, signed. */}

@@ -10,7 +10,7 @@ import { resolveTransition } from "@/features/transitions/kinds";
 import { TransitionCover } from "@/features/transitions/overlay";
 import { Controls } from "./controls";
 import { SlideFrame } from "./slide-frame";
-import type { Onward } from "./slide-nav";
+import { type Onward, SlideNav } from "./slide-nav";
 import { Stage } from "./stage";
 import {
   backward,
@@ -69,9 +69,10 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
 
 /**
  * A deck, played: one slide at a time on the stage, each coming in with its
- * transition. Never on its own, and never by a stray click: on is the
- * slide's own button (slide-nav.tsx), → ↓ space Enter, or a swipe to the
- * left; back its ←, ← ↑, or a swipe to the right. Home and End, F for full screen, H (or a long
+ * transition. Never on its own, never by a stray click or swipe: on is the
+ * slide's own button (slide-nav.tsx) or → ↓ space Enter; back its ← or
+ * ← ↑ – a step back (a point, a picture, a Card's fold), else the slide
+ * before. Home and End, F for full screen, H (or a long
  * press, or the mouse at the bottom edge) shows the controls, E arranges the
  * stickers (logged in). Every slide
  * has its address (`/talk`, `/talk/1` …): written as it changes, without
@@ -183,9 +184,9 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     return () => window.removeEventListener("keydown", key);
   }, [next, prev, to, slides.length, canArrange, setControls]);
 
-  // A swipe goes on or back – a plain tap or click does nothing (the arrows
-  // do). Not on a sticker (it is thrown), a button or a link. A long press
-  // (no keyboard on a phone) shows or hides the controls.
+  // A tap, a click or a swipe on the slide go nowhere – the slide's own
+  // buttons and the keys do. A long press (no keyboard on a phone) shows or
+  // hides the controls; not on a sticker (it is thrown), a button or a link.
   const down = useRef<{
     id: number;
     x: number;
@@ -216,21 +217,17 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       window.clearTimeout(start.timer);
     }
   };
-  const onPointerUp = (event: React.PointerEvent) => {
+  const onPointerUp = () => {
     const start = down.current;
     down.current = null;
     if (start) window.clearTimeout(start.timer);
-    if (start?.id !== event.pointerId || start.held) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) {
-      if (dx < 0) next();
-      else prev();
-    }
   };
 
   const slide = slides[pos.slide];
   if (!slide) return null;
+  // The way on shows once the slide is played through – points shown, stack
+  // thrown, Card opened – or at once on a slide seen before.
+  const ready = pos.slide < furthest || pos.step >= (steps[pos.slide] ?? 0);
   // Where the slide's own button leads.
   const onward: Onward =
     pos.step < (steps[pos.slide] ?? 0)
@@ -265,19 +262,32 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
               <SlideFrame
                 arrangement={arrangement}
                 arranging={arranging}
-                back={pos.slide > 0 || pos.step > 0}
                 key={slide.id}
                 move={move}
                 onArrange={canArrange ? arrange : undefined}
-                onBack={prev}
-                onOn={onward === "again" ? () => to(0) : next}
-                onward={onward}
-                seen={pos.slide < furthest}
+                onStep={next}
                 slide={slide}
                 step={pos.step}
               />
             </AnimatePresence>
             <TransitionCover key={move.n} look={slide.look} move={move} />
+            {/* The ways on and back stay on the stage, slide after slide. */}
+            <SlideNav
+              back={pos.slide > 0 || pos.step > 0}
+              delay={move.n === 0 ? 1.2 : 0.3}
+              look={slide.look}
+              onBack={prev}
+              onOn={onward === "again" ? () => to(0) : next}
+              onward={onward}
+              point={
+                slide.design === "gallery"
+                  ? "next picture"
+                  : slide.design === "card"
+                    ? "open"
+                    : "next point"
+              }
+              ready={ready}
+            />
           </Stage>
         </main>
         <Controls
