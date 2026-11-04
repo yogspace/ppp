@@ -1,9 +1,18 @@
 "use client";
 
-import { useContext, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import type { ThemeLook } from "@/features/themes/theme";
 import { SlideMoving } from "@/features/transitions/moving";
 import { cn } from "@/lib/cn";
+import type { FloatHandle } from "./floaties";
 
 /** A color mixed into another, `share` of the first (CSS does the math). */
 const mix = (a: string, b: string, share: number) =>
@@ -24,6 +33,28 @@ const hexMix = (a: string, b: string, share: number) => {
   return `#${c(ra, rb)}${c(ga, gb)}${c(ba, bb)}`;
 };
 
+/** The canvas behind the stage, the screen around it (AroundStage). */
+const Around = createContext<RefObject<HTMLCanvasElement | null> | null>(null);
+
+/**
+ * Behind the stage, the whole screen: where the slide at rest floats on
+ * past the stage's edges (floaties.ts) – nothing cut off there.
+ */
+export const AroundStage = ({ children }: { children: ReactNode }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  return (
+    <Around.Provider value={ref}>
+      <canvas
+        aria-hidden
+        className="pointer-events-none absolute inset-0 size-full"
+        ref={ref}
+        style={{ opacity: 0 }}
+      />
+      {children}
+    </Around.Provider>
+  );
+};
+
 const Floaties = ({ look }: { look: ThemeLook }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const { accent, bg, text } = look;
@@ -36,22 +67,31 @@ const Floaties = ({ look }: { look: ThemeLook }) => {
   useEffect(() => {
     const canvas = ref.current;
     if (!(canvas && go)) return;
-    let remove: (() => void) | null = null;
+    let made: FloatHandle | null = null;
     let on = true;
     import("./floaties").then(({ floatInto }) => {
       if (!on) return;
-      remove = floatInto(canvas, [
+      made = floatInto(canvas, [
         accent,
         hexMix(accent, "#ffffff", 0.55),
         hexMix(text, bg, 0.3),
         hexMix(accent, bg, 0.5),
       ]);
+      setHandle(made);
     });
     return () => {
       on = false;
-      remove?.();
+      made?.stop();
+      setHandle(null);
     };
   }, [accent, bg, text, go]);
+  // At rest, on past the stage's edges too; moving, inside it only.
+  const around = useContext(Around);
+  const [handle, setHandle] = useState<FloatHandle | null>(null);
+  useEffect(() => {
+    if (!handle) return;
+    handle.around(moving ? null : (around?.current ?? null));
+  }, [handle, moving, around]);
   return (
     <canvas
       aria-hidden

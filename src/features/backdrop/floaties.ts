@@ -11,13 +11,19 @@ import { mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
  * One WebGL context for all of them (browsers allow only a few): each slide
  * showing floaties has a plain canvas, the scene is drawn once per canvas in
  * its colors and copied in. Two at a time during a transition, else one.
+ *
+ * The slide at rest also floats past its stage's edges, into the screen
+ * around it (`around`, a canvas behind the stage): drawn once for the whole
+ * screen, the stage's part copied into the slide, the whole into `around`
+ * – where the stage ends, the shapes go on, right where they were.
  */
 
-type Target = {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
+type Paint = { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D };
+
+type Target = Paint & {
   colors: THREE.Color[];
   seed: number;
+  around: Paint | null;
 };
 
 const FOV = 30;
@@ -199,6 +205,23 @@ class Floaties {
     if (!this.still) this.frame = requestAnimationFrame(this.tick);
   };
 
+  /** The screen around the stage, as seen from the stage – or null. */
+  private view(target: Target, width: number, height: number) {
+    const around = target.around?.canvas;
+    const stage = target.canvas.closest("[data-stage]");
+    if (!(around && stage)) return null;
+    const s = stage.getBoundingClientRect();
+    const o = around.getBoundingClientRect();
+    // Nothing around it (a phone held upright: the stage is the screen).
+    if (o.width <= width + 1 && o.height <= height + 1) return null;
+    return {
+      left: Math.round(s.left - o.left),
+      top: Math.round(s.top - o.top),
+      width: Math.round(o.width),
+      height: Math.round(o.height),
+    };
+  }
+
   private draw(target: Target, t: number) {
     const { canvas, ctx } = target;
     const width = canvas.clientWidth;
@@ -211,9 +234,25 @@ class Floaties {
       canvas.width = w;
       canvas.height = h;
     }
+    const view = this.view(target, width, height);
+    const rw = view ? Math.round(view.width * ratio) : w;
+    const rh = view ? Math.round(view.height * ratio) : h;
     const size = this.renderer.getSize(new THREE.Vector2());
-    if (size.x !== w || size.y !== h) this.renderer.setSize(w, h, false);
+    if (size.x !== rw || size.y !== rh) this.renderer.setSize(rw, rh, false);
+    // Framed by the stage always – around it, the frame just reaches further.
     this.camera.aspect = width / height;
+    if (view) {
+      this.camera.setViewOffset(
+        width,
+        height,
+        -view.left,
+        -view.top,
+        view.width,
+        view.height
+      );
+    } else {
+      this.camera.clearViewOffset();
+    }
     this.camera.updateProjectionMatrix();
 
     // The slide's half width and height at depth 0.
@@ -238,8 +277,38 @@ class Floaties {
       floaty.material.color.copy(target.colors[i % target.colors.length]);
     });
     this.renderer.render(this.scene, this.camera);
+    const drawn = this.renderer.domElement;
     ctx.clearRect(0, 0, w, h);
-    ctx.drawImage(this.renderer.domElement, 0, 0, w, h);
+    if (!(view && target.around)) {
+      ctx.drawImage(drawn, 0, 0, w, h);
+      return;
+    }
+    ctx.drawImage(drawn, view.left * ratio, view.top * ratio, w, h, 0, 0, w, h);
+    const out = target.around;
+    if (out.canvas.width !== rw || out.canvas.height !== rh) {
+      out.canvas.width = rw;
+      out.canvas.height = rh;
+    }
+    out.ctx.clearRect(0, 0, rw, rh);
+    out.ctx.drawImage(drawn, 0, 0);
+  }
+
+  /** The screen around the stage to float into too – or no longer. */
+  setAround(target: Target, canvas: HTMLCanvasElement | null) {
+    if (target.around?.canvas === canvas) return;
+    const was = target.around;
+    target.around = null;
+    if (was) {
+      // Gone softly, the last frame fading; cleared once out of sight.
+      was.canvas.style.transition = "opacity 0.3s ease";
+      was.canvas.style.opacity = "0";
+    }
+    const ctx = canvas?.getContext("2d");
+    if (!(canvas && ctx)) return;
+    target.around = { canvas, ctx };
+    this.draw(target, this.still ? 0 : performance.now() / 1000);
+    canvas.style.transition = "opacity 0.7s ease";
+    canvas.style.opacity = "1";
   }
 
   dispose() {
@@ -256,10 +325,20 @@ class Floaties {
 let shared: Floaties | null = null;
 let idle = 0;
 
-/** Floaties into this canvas, in these colors; the result takes them away. */
-export const floatInto = (canvas: HTMLCanvasElement, colors: string[]) => {
+export type FloatHandle = {
+  /** Into the screen around the stage too (a canvas) – null: no longer. */
+  around: (canvas: HTMLCanvasElement | null) => void;
+  /** Takes them away. */
+  stop: () => void;
+};
+
+/** Floaties into this canvas, in these colors. */
+export const floatInto = (
+  canvas: HTMLCanvasElement,
+  colors: string[]
+): FloatHandle | null => {
   const ctx = canvas.getContext("2d");
-  if (!ctx) return () => undefined;
+  if (!ctx) return null;
   window.clearTimeout(idle);
   shared ??= new Floaties();
   const target: Target = {
@@ -267,17 +346,23 @@ export const floatInto = (canvas: HTMLCanvasElement, colors: string[]) => {
     ctx,
     colors: colors.map((c) => new THREE.Color(c)),
     seed: Math.random() * 10,
+    around: null,
   };
   shared.add(target);
-  return () => {
-    shared?.remove(target);
-    // Kept a moment: the next slide likely floats too.
-    window.clearTimeout(idle);
-    idle = window.setTimeout(() => {
-      if (shared?.empty) {
-        shared.dispose();
-        shared = null;
-      }
-    }, 4000);
+  const owner = shared;
+  return {
+    around: (el) => owner.setAround(target, el),
+    stop: () => {
+      owner.setAround(target, null);
+      owner.remove(target);
+      // Kept a moment: the next slide likely floats too.
+      window.clearTimeout(idle);
+      idle = window.setTimeout(() => {
+        if (shared?.empty) {
+          shared.dispose();
+          shared = null;
+        }
+      }, 4000);
+    },
   };
 };

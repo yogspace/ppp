@@ -3,6 +3,7 @@
 import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MotionProvider } from "@/components/motion";
+import { AroundStage } from "@/features/backdrop/slide-background";
 import { StickerStage } from "@/features/stickers/sticker-stage";
 import { useArrange } from "@/features/stickers/use-arrange";
 import type { Move } from "@/features/transitions/frames";
@@ -259,33 +260,35 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
           }}
         >
           <h1 className="sr-only">{deck.title}</h1>
-          <Stage>
-            <AnimatePresence custom={move}>
-              <SlideFrame
-                arrangement={arrangement}
-                arranging={arranging}
-                key={slide.id}
-                move={move}
-                onArrange={canArrange ? arrange : undefined}
-                onStep={next}
-                slide={slide}
-                step={pos.step}
+          <AroundStage>
+            <Stage>
+              <AnimatePresence custom={move}>
+                <SlideFrame
+                  arrangement={arrangement}
+                  arranging={arranging}
+                  key={slide.id}
+                  move={move}
+                  onArrange={canArrange ? arrange : undefined}
+                  onStep={next}
+                  slide={slide}
+                  step={pos.step}
+                />
+              </AnimatePresence>
+              <TransitionCover key={move.n} look={slide.look} move={move} />
+              {/* The ways on and back stay on the stage, slide after slide. */}
+              <SlideNav
+                back={pos.slide > 0 || pos.step > 0}
+                delay={move.n === 0 ? 1.2 : 0.3}
+                label={slide.nextLabel || deck.nextLabel}
+                look={slide.look}
+                onBack={prev}
+                onOn={onward === "again" ? () => to(0) : next}
+                onward={onward}
+                progress={total ? pos.step / total : 1}
+                ready={ready}
               />
-            </AnimatePresence>
-            <TransitionCover key={move.n} look={slide.look} move={move} />
-            {/* The ways on and back stay on the stage, slide after slide. */}
-            <SlideNav
-              back={pos.slide > 0 || pos.step > 0}
-              delay={move.n === 0 ? 1.2 : 0.3}
-              label={slide.nextLabel || deck.nextLabel}
-              look={slide.look}
-              onBack={prev}
-              onOn={onward === "again" ? () => to(0) : next}
-              onward={onward}
-              progress={total ? pos.step / total : 1}
-              ready={ready}
-            />
-          </Stage>
+            </Stage>
+          </AroundStage>
         </main>
         <Controls
           arranging={arranging}

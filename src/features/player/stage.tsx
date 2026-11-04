@@ -39,6 +39,7 @@ export const Stage = ({ children }: { children: ReactNode }) => {
   return (
     <div
       className="relative aspect-video w-[min(100vw,177.78dvh)] overflow-hidden [container:stage/size] portrait:aspect-auto portrait:h-dvh portrait:w-screen"
+      data-stage
       ref={ref}
     >
       <StageSize.Provider value={size}>
