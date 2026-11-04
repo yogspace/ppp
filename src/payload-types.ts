@@ -134,11 +134,11 @@ export interface Deck {
   title: string;
   slug: string;
   /**
-   * Every slide's theme, unless it picks its own.
+   * Every slide's – a slide may pick its own (tab Look).
    */
   theme?: (string | null) | Theme;
   /**
-   * How the slides come in, unless one picks its own.
+   * How every slide comes in – a slide may pick its own.
    */
   transition:
     | 'swipe'
@@ -162,6 +162,10 @@ export interface Deck {
     | 'heart'
     | 'clock'
     | 'surprise';
+  /**
+   * The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.
+   */
+  dock?: boolean | null;
   slides: (
     | {
         /**
@@ -182,11 +186,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -234,11 +238,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -296,11 +300,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -348,11 +352,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -400,11 +404,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -467,11 +471,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -542,11 +546,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -590,11 +594,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -653,11 +657,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -699,11 +703,11 @@ export interface Deck {
             }[]
           | null;
         /**
-         * Empty: the deck's theme.
+         * Only this slide's. Empty: the deck's default.
          */
         theme?: (string | null) | Theme;
         /**
-         * How it comes in. Empty: the deck's. 💾 PowerPoint 2003.
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
          */
         transition?:
           | (
@@ -995,6 +999,7 @@ export interface DecksSelect<T extends boolean = true> {
   slug?: T;
   theme?: T;
   transition?: T;
+  dock?: T;
   slides?:
     | T
     | {

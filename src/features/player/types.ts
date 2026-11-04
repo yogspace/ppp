@@ -80,6 +80,8 @@ export type DeckData = {
   slug: string;
   title: string;
   transition: TransitionChoice;
+  /** The controls at the bottom – off: the slides' own buttons only. */
+  dock: boolean;
   slides: SlideData[];
   arrangement: Arrangement;
 };

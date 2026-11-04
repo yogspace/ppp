@@ -145,6 +145,7 @@ export const deckData = (deck: Deck): DeckData => {
     transition: isChoice(deck.transition)
       ? deck.transition
       : DEFAULT_TRANSITION,
+    dock: deck.dock ?? true,
     slides: (deck.slides ?? []).flatMap((slide, index) => {
       const data = slideOf(slide, index, deckLook, postmark(deck.createdAt));
       return data ? [data] : [];

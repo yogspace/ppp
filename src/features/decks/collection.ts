@@ -64,20 +64,33 @@ export const Decks: CollectionConfig = {
       name: "theme",
       type: "relationship",
       relationTo: "themes",
+      label: "Default theme",
       admin: {
         position: "sidebar",
-        description: "Every slide's theme, unless it picks its own.",
+        description: "Every slide's – a slide may pick its own (tab Look).",
       },
     },
     {
       name: "transition",
       type: "select",
+      label: "Default transition",
       required: true,
       defaultValue: DEFAULT_TRANSITION,
       options: transitionOptions(),
       admin: {
         position: "sidebar",
-        description: "How the slides come in, unless one picks its own.",
+        description: "How every slide comes in – a slide may pick its own.",
+      },
+    },
+    {
+      name: "dock",
+      type: "checkbox",
+      label: "Dock",
+      defaultValue: true,
+      admin: {
+        position: "sidebar",
+        description:
+          "The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.",
       },
     },
     {

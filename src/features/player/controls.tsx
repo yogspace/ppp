@@ -71,6 +71,8 @@ const useDock = (ref: RefObject<HTMLElement | null>) => {
 };
 
 type Props = {
+  /** The deck has a dock at all – else only the arranging band. */
+  dock: boolean;
   /** Pinned (H, or a long press) – else they come up like a dock. */
   shown: boolean;
   count: number;
@@ -90,6 +92,7 @@ type Props = {
  * screen.
  */
 export const Controls = ({
+  dock,
   shown: asked,
   count,
   slide,
@@ -109,7 +112,7 @@ export const Controls = ({
   }, []);
   const dockRef = useRef<HTMLElement>(null);
   const docked = useDock(dockRef);
-  const shown = asked || docked || arranging;
+  const shown = dock && (asked || docked || arranging);
 
   return (
     <>
@@ -154,81 +157,83 @@ export const Controls = ({
         )}
       </AnimatePresence>
 
-      <m.nav
-        animate={{ y: shown ? 0 : 24, opacity: shown ? 1 : 0 }}
-        aria-label="Slides"
-        className={cn(
-          "fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-neutral-950/80 p-1 text-white shadow-[0_0.5rem_1.5rem_-0.5rem_rgb(0_0_0/0.5)] backdrop-blur",
-          !shown && "pointer-events-none"
-        )}
-        data-controls
-        initial={false}
-        ref={dockRef}
-        transition={SPRING}
-      >
-        {count <= 24 ? (
-          <div className="flex items-center gap-1.5 px-1">
-            {Array.from({ length: count }, (_, i) => (
-              <button
-                aria-current={i === slide ? "step" : undefined}
-                aria-label={`Slide ${i + 1}`}
-                className="relative grid h-11 w-3 place-items-center"
-                key={i}
-                onClick={() => onJump(i)}
-                type="button"
-              >
-                {i === slide ? (
-                  <m.i
-                    className="block h-2.5 w-5 rounded-full bg-white"
-                    layoutId="current-dot"
-                    transition={SPRING}
-                  />
-                ) : (
-                  <i className="block size-2 rounded-full bg-white/40 transition-[scale] duration-200 ease-spring hover:scale-150" />
-                )}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <span className="px-2 text-sm tabular-nums">
-            {slide + 1} / {count}
-          </span>
-        )}
-        {canFullscreen && (
-          <button
-            aria-label={fullscreen ? "Leave full screen" : "Full screen"}
-            className={button}
-            onClick={() =>
-              fullscreen
-                ? document.exitFullscreen()
-                : document.documentElement.requestFullscreen()
-            }
-            type="button"
-          >
-            <Icon
-              d={
+      {dock && (
+        <m.nav
+          animate={{ y: shown ? 0 : 24, opacity: shown ? 1 : 0 }}
+          aria-label="Slides"
+          className={cn(
+            "fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-neutral-950/80 p-1 text-white shadow-[0_0.5rem_1.5rem_-0.5rem_rgb(0_0_0/0.5)] backdrop-blur",
+            !shown && "pointer-events-none"
+          )}
+          data-controls
+          initial={false}
+          ref={dockRef}
+          transition={SPRING}
+        >
+          {count <= 24 ? (
+            <div className="flex items-center gap-1.5 px-1">
+              {Array.from({ length: count }, (_, i) => (
+                <button
+                  aria-current={i === slide ? "step" : undefined}
+                  aria-label={`Slide ${i + 1}`}
+                  className="relative grid h-11 w-3 place-items-center"
+                  key={i}
+                  onClick={() => onJump(i)}
+                  type="button"
+                >
+                  {i === slide ? (
+                    <m.i
+                      className="block h-2.5 w-5 rounded-full bg-white"
+                      layoutId="current-dot"
+                      transition={SPRING}
+                    />
+                  ) : (
+                    <i className="block size-2 rounded-full bg-white/40 transition-[scale] duration-200 ease-spring hover:scale-150" />
+                  )}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <span className="px-2 text-sm tabular-nums">
+              {slide + 1} / {count}
+            </span>
+          )}
+          {canFullscreen && (
+            <button
+              aria-label={fullscreen ? "Leave full screen" : "Full screen"}
+              className={button}
+              onClick={() =>
                 fullscreen
-                  ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"
-                  : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
+                  ? document.exitFullscreen()
+                  : document.documentElement.requestFullscreen()
               }
-            />
-          </button>
-        )}
-        {canArrange && (
-          <button
-            aria-label="Arrange stickers"
-            aria-pressed={arranging}
-            className={cn(
-              button,
-              arranging && "bg-white text-neutral-950 hover:bg-white"
-            )}
-            onClick={onArrange}
-            type="button"
-          >
-            <Icon d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" />
-          </button>
-        )}
-      </m.nav>
+              type="button"
+            >
+              <Icon
+                d={
+                  fullscreen
+                    ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"
+                    : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
+                }
+              />
+            </button>
+          )}
+          {canArrange && (
+            <button
+              aria-label="Arrange stickers"
+              aria-pressed={arranging}
+              className={cn(
+                button,
+                arranging && "bg-white text-neutral-950 hover:bg-white"
+              )}
+              onClick={onArrange}
+              type="button"
+            >
+              <Icon d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" />
+            </button>
+          )}
+        </m.nav>
+      )}
     </>
   );
 };

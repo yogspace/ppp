@@ -1,7 +1,8 @@
 import type { Payload } from "payload";
 import sharp from "sharp";
+import { TRANSITIONS } from "@/features/transitions/kinds";
 import type { Theme } from "@/payload-types";
-import { DEMO_CARD, DEMO_DECK } from "./definitions";
+import { DEMO_CARD, DEMO_DECK, DEMO_TRANSITIONS } from "./definitions";
 import { PHOTOS, STICKERS, svg } from "./demo-art";
 
 type Mode = "fill" | "replace";
@@ -125,12 +126,14 @@ const rich = (...paragraphs: string[]) => ({
 const clear = async (payload: Payload) => {
   await payload.delete({
     collection: "decks",
-    where: { slug: { in: [DEMO_DECK, DEMO_CARD] } },
+    where: { slug: { in: [DEMO_DECK, DEMO_CARD, DEMO_TRANSITIONS] } },
     ...local,
   });
   await payload.delete({
     collection: "themes",
-    where: { name: { in: Object.values(THEMES).map((t) => t.name) } },
+    where: {
+      name: { in: [...Object.values(THEMES).map((t) => t.name), PHOTO_THEME] },
+    },
     ...local,
   });
   await payload.delete({
@@ -187,9 +190,14 @@ const pictures = async (payload: Payload) => {
   return { ids, made };
 };
 
-/** The demo's themes – those already there by name, the rest made. */
-const themes = async (payload: Payload) => {
-  const ids = {} as Record<keyof typeof THEMES, string>;
+const PHOTO_THEME = "Demo Photo";
+
+/**
+ * The demo's themes – those already there by name, the rest made; one of
+ * them on a photo (`photo`, a picture's id).
+ */
+const themes = async (payload: Payload, photo: string) => {
+  const ids = {} as Record<keyof typeof THEMES | "photo", string>;
   let made = 0;
   for (const [key, data] of Object.entries(THEMES)) {
     const { docs } = await payload.find({
@@ -203,6 +211,34 @@ const themes = async (payload: Payload) => {
       (await payload.create({ collection: "themes", data, ...local })).id;
     if (!docs[0]) made++;
   }
+  const { docs } = await payload.find({
+    collection: "themes",
+    where: { name: { equals: PHOTO_THEME } },
+    limit: 1,
+    ...local,
+  });
+  ids.photo =
+    docs[0]?.id ??
+    (
+      await payload.create({
+        collection: "themes",
+        data: {
+          name: PHOTO_THEME,
+          bg: "#4a55a2",
+          text: "#ffffff",
+          accent: "#ffd166",
+          paper: "#fffcf5",
+          paperText: "#0b1533",
+          font: "rounded",
+          caps: false,
+          background: "picture",
+          picture: photo,
+          grain: true,
+        },
+        ...local,
+      })
+    ).id;
+  if (!docs[0]) made++;
   return { ids, made };
 };
 
@@ -216,21 +252,22 @@ const exists = async (payload: Payload, slug: string) =>
   ).totalDocs > 0;
 
 /**
- * The demo: the deck /hello – every design, a few transitions, good ones
- * and 💾 ones – and the card /for-you (a deck of one Card slide), with the
- * stickers, photos and themes they show. Fill adds what is missing; replace
+ * The demo: the deck /hello – every design –, /transitions – every
+ * transition once, in order – and the card /for-you (a deck of one Card
+ * slide), with the stickers, photos and themes they show. Fill adds what is missing; replace
  * makes it all anew.
  */
 export const seedDemo = async (payload: Payload, mode: Mode) => {
   if (mode === "replace") await clear(payload);
   const deckThere = await exists(payload, DEMO_DECK);
   const cardThere = await exists(payload, DEMO_CARD);
-  if (deckThere && cardThere) {
-    return `/${DEMO_DECK} and /${DEMO_CARD} are there already – nothing added.`;
+  const transitionsThere = await exists(payload, DEMO_TRANSITIONS);
+  if (deckThere && cardThere && transitionsThere) {
+    return `/${DEMO_DECK}, /${DEMO_TRANSITIONS} and /${DEMO_CARD} are there already – nothing added.`;
   }
 
   const media = await pictures(payload);
-  const themed = await themes(payload);
+  const themed = await themes(payload, media.ids.sunset);
   const look = themed.ids;
   const m = media.ids;
   const stickers = (...names: string[]) =>
@@ -298,6 +335,18 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
             caption: "Planet Cute",
             fit: "framed",
             transition: "toss",
+          },
+          {
+            blockType: "split",
+            heading: "Words + picture",
+            body: rich(
+              "A few words on one side, a picture on the other – on a phone held upright, one above the other.",
+              "This slide's theme sits on a photo, with a little grain."
+            ),
+            image: m.hills,
+            side: "right",
+            theme: look.photo,
+            transition: "zoom",
           },
           {
             blockType: "gallery",
@@ -391,10 +440,52 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
     });
   }
 
+  if (!transitionsThere) {
+    const looks = [
+      look.marble,
+      look.bubblegum,
+      look.night,
+      look.luminous,
+      look.photo,
+    ];
+    const art = ["star", "heart", "rainbow", "planet", "icecream", "ghost"];
+    const kinds = Object.entries(TRANSITIONS) as [
+      keyof typeof TRANSITIONS,
+      string,
+    ][];
+    await payload.create({
+      collection: "decks",
+      ...local,
+      data: {
+        title: "Every transition",
+        slug: DEMO_TRANSITIONS,
+        theme: look.marble,
+        transition: "fade",
+        slides: kinds.map(([kind, label], i) => {
+          const [name, about] = label.split(" – ");
+          return {
+            blockType: "cover" as const,
+            kicker: `${i + 1} of ${kinds.length}`,
+            title: name.replace("💾 ", "").replace("🎲 ", ""),
+            subtitle: about
+              ? `${name.startsWith("💾") ? "PowerPoint 2003: " : ""}${about}`
+              : name.startsWith("💾")
+                ? "PowerPoint 2003"
+                : "",
+            theme: looks[i % looks.length],
+            transition: kind,
+            stickers: stickers(art[i % art.length]),
+          };
+        }),
+      },
+    });
+  }
+
   return [
     `deck /${DEMO_DECK} ${deckThere ? "kept" : "made"}`,
+    `deck /${DEMO_TRANSITIONS} ${transitionsThere ? "kept" : "made"}`,
     `card /${DEMO_CARD} ${cardThere ? "kept" : "made"}`,
     `${media.made} of ${ALL_PICTURES.length} pictures drawn`,
-    `${themed.made} of ${Object.keys(THEMES).length} themes made`,
+    `${themed.made} of ${Object.keys(THEMES).length + 1} themes made`,
   ].join(" · ");
 };

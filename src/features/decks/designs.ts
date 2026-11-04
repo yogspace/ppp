@@ -21,19 +21,23 @@ const LOOK: Tab = {
           name: "theme",
           type: "relationship",
           relationTo: "themes",
+          label: "Own theme",
           admin: {
             width: "50%",
-            description: "Empty: the deck's theme.",
+            placeholder: "Like the deck",
+            description: "Only this slide's. Empty: the deck's default.",
           },
         },
         {
           name: "transition",
           type: "select",
+          label: "Own transition",
           options: transitionOptions(),
           admin: {
             width: "50%",
+            placeholder: "Like the deck",
             description:
-              "How it comes in. Empty: the deck's. 💾 PowerPoint 2003.",
+              "How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.",
           },
         },
       ],

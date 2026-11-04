@@ -294,6 +294,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
           arranging={arranging}
           canArrange={canArrange}
           count={slides.length}
+          dock={deck.dock}
           onArrange={() => setArranging((a) => !a)}
           onJump={to}
           saveState={state}
