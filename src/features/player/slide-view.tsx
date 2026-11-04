@@ -458,7 +458,8 @@ const Framed = ({ image, caption }: { image: Picture; caption: string }) => {
           picture={image}
           style={box}
         />
-        <figcaption className="copy min-h-[2.133cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] text-neutral-800">
+        {/* Never edge to edge: broken into even lines, in the middle. */}
+        <figcaption className="copy min-h-[2.133cqmin] px-[4cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] leading-[1.2] text-balance text-neutral-800">
           {caption}
         </figcaption>
       </m.figure>
@@ -658,7 +659,7 @@ const GalleryStack = ({
               />
               {/* Up to two lines, the rim growing along – then cut. */}
               <span
-                className="copy line-clamp-2 text-center leading-[1.15] text-neutral-800"
+                className="copy line-clamp-2 text-center leading-[1.15] text-balance text-neutral-800"
                 style={{
                   minHeight: foot,
                   paddingTop: caption ? 0.7 * u : 0,
@@ -786,7 +787,7 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
                 style={{ aspectRatio: `${aspect}` }}
               />
               <span
-                className="copy line-clamp-2 px-[0.711cqmin] text-center leading-[1.15] text-neutral-800"
+                className="copy line-clamp-2 px-[0.711cqmin] text-center leading-[1.15] text-balance text-neutral-800"
                 style={{
                   minHeight: foot,
                   paddingTop: 0.5 * u,

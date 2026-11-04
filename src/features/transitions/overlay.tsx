@@ -122,16 +122,27 @@ const Curtain = ({ look, duration }: { look: ThemeLook; duration: number }) => {
 export const TransitionCover = ({
   move,
   look,
+  layer = "stage",
 }: {
   move: Move;
   look: ThemeLook;
+  /**
+   * The stage (cut off at its edges: what covers the slide) or the layer
+   * above it (not cut off: confetti flies over the whole screen).
+   */
+  layer?: "stage" | "above";
 }) => {
   const cover = specOf(move.kind).cover;
   if (!cover) return null;
+  if ((move.kind === "confetti") !== (layer === "above")) return null;
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 z-40 overflow-hidden"
+      className={
+        layer === "above"
+          ? "pointer-events-none absolute inset-0"
+          : "pointer-events-none absolute inset-0 z-40 overflow-hidden"
+      }
     >
       {move.kind === "blob" && <Blob duration={cover.duration} look={look} />}
       {move.kind === "confetti" && <Confetti />}

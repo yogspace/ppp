@@ -190,10 +190,10 @@ export class StickerRenderer {
     // readable – a photo sticker must still show its photo.
     const face = new THREE.MeshPhysicalMaterial({
       map,
-      roughness: 0.85,
-      clearcoat: 0.2,
-      clearcoatRoughness: 0.5,
-      envMapIntensity: 0.45,
+      roughness: 0.9,
+      clearcoat: 0.1,
+      clearcoatRoughness: 0.6,
+      envMapIntensity: 0.3,
       // A little of its own light: the picture keeps its colors, whatever
       // the lighting – the sheen comes on top.
       emissive: 0xffffff,
@@ -217,6 +217,12 @@ export class StickerRenderer {
     };
     this.built.set(art, built);
     return built;
+  }
+
+  /** Its 3D shape built ahead, while nothing moves – kept until used. */
+  prepare(art: StickerArt) {
+    if (this.built.has(art)) return;
+    this.build(art).users = 0;
   }
 
   private release(art: StickerArt) {

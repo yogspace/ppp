@@ -23,7 +23,17 @@ export const useStageSize = () => useContext(StageSize);
  * `tall` variant lays things out for the upright one. What it holds is
  * drawn once it is measured – in the browser, never on the server.
  */
-export const Stage = ({ children }: { children: ReactNode }) => {
+export const Stage = ({
+  children,
+  above,
+}: {
+  children: ReactNode;
+  /**
+   * Over everything on the stage – the 3D stickers too – and not cut off at
+   * its edges: the slide's own buttons, the confetti.
+   */
+  above?: ReactNode;
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState<Size>({ width: 0, height: 0 });
   useLayoutEffect(() => {
@@ -37,13 +47,20 @@ export const Stage = ({ children }: { children: ReactNode }) => {
     return () => observer.disconnect();
   }, []);
   return (
-    <div
-      className="relative aspect-video w-[min(100vw,177.78dvh)] overflow-hidden [container:stage/size] portrait:aspect-auto portrait:h-dvh portrait:w-screen"
-      data-stage
-      ref={ref}
-    >
+    <div className="relative aspect-video w-[min(100vw,177.78dvh)] portrait:aspect-auto portrait:h-dvh portrait:w-screen">
       <StageSize.Provider value={size}>
-        {size.width > 0 && children}
+        <div
+          className="absolute inset-0 overflow-hidden [container:stage/size]"
+          data-stage
+          ref={ref}
+        >
+          {size.width > 0 && children}
+        </div>
+        {above && (
+          <div className="pointer-events-none absolute inset-0 z-50 [container:stage/size]">
+            {size.width > 0 && above}
+          </div>
+        )}
       </StageSize.Provider>
     </div>
   );

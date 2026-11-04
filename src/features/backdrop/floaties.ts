@@ -24,6 +24,8 @@ type Target = Paint & {
   colors: THREE.Color[];
   seed: number;
   around: Paint | null;
+  /** Not drawn for now (its slide is leaving). */
+  paused: boolean;
   /** Where the slide's words are (text.ts's boxes) – and when last looked. */
   words: Box[];
   looked: number;
@@ -312,6 +314,8 @@ class Floaties {
   }
 
   private draw(target: Target, t: number) {
+    // A slide on its way out: its last frame stays – no drawing mid-move.
+    if (target.paused) return;
     const { canvas, ctx } = target;
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
@@ -444,6 +448,8 @@ let idle = 0;
 export type FloatHandle = {
   /** Into the screen around the stage too (a canvas) – null: no longer. */
   around: (canvas: HTMLCanvasElement | null) => void;
+  /** Held still for now (true) or drawn again. */
+  pause: (paused: boolean) => void;
   /** Takes them away. */
   stop: () => void;
 };
@@ -463,6 +469,7 @@ export const floatInto = (
     colors: colors.map((c) => new THREE.Color(c)),
     seed: Math.random() * 10,
     around: null,
+    paused: false,
     words: [],
     looked: 0,
     age: 0,
@@ -473,6 +480,9 @@ export const floatInto = (
   const owner = shared;
   return {
     around: (el) => owner.setAround(target, el),
+    pause: (paused) => {
+      target.paused = paused;
+    },
     stop: () => {
       owner.setAround(target, null);
       owner.remove(target);

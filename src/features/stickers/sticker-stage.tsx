@@ -3,6 +3,7 @@
 import {
   createContext,
   type ReactNode,
+  type RefObject,
   useContext,
   useEffect,
   useMemo,
@@ -19,11 +20,20 @@ type Stage = {
     read: () => StickerPose | null,
     node: Element
   ) => (() => void) | null;
+  /** Made ready ahead (its 3D shape built) – a sticker about to come. */
+  prepare: (art: StickerArt) => void;
   /** The 3D canvas is running. */
   ready: boolean;
+  /** Where the canvas goes (StickerCanvas). */
+  canvasRef: RefObject<HTMLCanvasElement | null>;
 };
 
-const StageContext = createContext<Stage>({ add: () => null, ready: false });
+const StageContext = createContext<Stage>({
+  add: () => null,
+  prepare: () => undefined,
+  ready: false,
+  canvasRef: { current: null },
+});
 
 /** The page's stickers' 3D stage – a sticker asks it to be drawn. */
 export const useStickerStage = () => useContext(StageContext);
@@ -60,19 +70,29 @@ export const StickerStage = ({ children }: { children: ReactNode }) => {
     () => ({
       add: (art, read, node) =>
         rendererRef.current?.add(art, read, node) ?? null,
+      prepare: (art) => rendererRef.current?.prepare(art),
       ready,
+      canvasRef,
     }),
     [ready]
   );
 
   return (
-    <StageContext.Provider value={stage}>
-      {children}
-      <canvas
-        aria-hidden
-        className="pointer-events-none fixed inset-0 z-30 size-full"
-        ref={canvasRef}
-      />
-    </StageContext.Provider>
+    <StageContext.Provider value={stage}>{children}</StageContext.Provider>
+  );
+};
+
+/**
+ * The stickers' 3D canvas: over the slides, under the slide's own buttons
+ * and the confetti (the stage's layer above) – put where that holds.
+ */
+export const StickerCanvas = () => {
+  const { canvasRef } = useStickerStage();
+  return (
+    <canvas
+      aria-hidden
+      className="pointer-events-none fixed inset-0 z-30 size-full"
+      ref={canvasRef}
+    />
   );
 };

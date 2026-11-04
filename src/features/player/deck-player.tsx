@@ -5,12 +5,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MotionProvider } from "@/components/motion";
 import { AroundStage } from "@/features/backdrop/slide-background";
 import { picturesIn, preload } from "@/features/media/preload";
-import { StickerStage } from "@/features/stickers/sticker-stage";
+import { PrepareStickers } from "@/features/stickers/prepare";
+import { StickerCanvas, StickerStage } from "@/features/stickers/sticker-stage";
 import { useArrange } from "@/features/stickers/use-arrange";
 import type { Move } from "@/features/transitions/frames";
 import { resolveTransition } from "@/features/transitions/kinds";
 import { TransitionCover } from "@/features/transitions/overlay";
 import { Controls } from "./controls";
+import { useDocumentColor } from "./document-color";
 import { SlideFrame } from "./slide-frame";
 import { type Onward, SlideNav } from "./slide-nav";
 import { Stage } from "./stage";
@@ -277,6 +279,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   };
 
   const slide = slides[pos.slide];
+  useDocumentColor(slide?.look.bg ?? "#efeff5");
   if (!slide) return null;
   // The way on shows once the slide is played through – points shown, stack
   // thrown, Card opened –, at once on a slide seen before, or from the start
@@ -313,7 +316,34 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
         >
           <h1 className="sr-only">{deck.title}</h1>
           <AroundStage>
-            <Stage>
+            <Stage
+              above={
+                <>
+                  <TransitionCover
+                    key={move.n}
+                    layer="above"
+                    look={slide.look}
+                    move={move}
+                  />
+                  {/* The ways on and back stay on the stage, slide after slide. */}
+                  <SlideNav
+                    back={pos.slide > 0 || pos.step > 0}
+                    delay={move.n === 0 ? 1.2 : 0.3}
+                    label={slide.nextLabel || deck.nextLabel}
+                    look={slide.look}
+                    onBack={prev}
+                    onOn={onward === "again" ? () => to(0) : next}
+                    onward={onward}
+                    progress={total ? pos.step / total : 1}
+                    ready={ready}
+                    // Mid-transition, the ways to another slide wait (a click is kept):
+                    // pressed in a little until the slide has arrived.
+                    waitBack={!settled && pos.step === 0}
+                    waitOn={!settled && onward !== "point"}
+                  />
+                </>
+              }
+            >
               <AnimatePresence custom={move}>
                 <SlideFrame
                   arrangement={arrangement}
@@ -328,24 +358,12 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                 />
               </AnimatePresence>
               <TransitionCover key={move.n} look={slide.look} move={move} />
-              {/* The ways on and back stay on the stage, slide after slide. */}
-              <SlideNav
-                back={pos.slide > 0 || pos.step > 0}
-                delay={move.n === 0 ? 1.2 : 0.3}
-                label={slide.nextLabel || deck.nextLabel}
-                look={slide.look}
-                onBack={prev}
-                onOn={onward === "again" ? () => to(0) : next}
-                onward={onward}
-                progress={total ? pos.step / total : 1}
-                ready={ready}
-                // Mid-transition, the ways to another slide wait (a click is kept):
-                // pressed in a little until the slide has arrived.
-                waitBack={!settled && pos.step === 0}
-                waitOn={!settled && onward !== "point"}
-              />
             </Stage>
           </AroundStage>
+          <StickerCanvas />
+          <PrepareStickers
+            slides={[slides[pos.slide + 1], slides[pos.slide - 1]]}
+          />
         </main>
         <Controls
           arranging={arranging}

@@ -92,6 +92,8 @@ const Floaties = ({ look }: { look: ThemeLook }) => {
   useEffect(() => {
     if (!handle) return;
     handle.around(moving ? null : (around?.current ?? null));
+    // Moving (leaving): held still – the move gets the frames.
+    handle.pause(moving);
   }, [handle, moving, around]);
   return (
     <canvas aria-hidden className="absolute inset-0 size-full" ref={ref} />
