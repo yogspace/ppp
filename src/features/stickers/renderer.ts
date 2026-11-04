@@ -132,9 +132,10 @@ export class StickerRenderer {
     ).texture;
     this.scene.environmentIntensity = 0.9;
     pmrem.dispose();
-    const key = new THREE.DirectionalLight(0xffffff, 1.6);
+    // Soft enough that a sticker turned right at it keeps its picture.
+    const key = new THREE.DirectionalLight(0xffffff, 1.05);
     key.position.set(-0.6, 1, 1.4);
-    this.scene.add(key, new THREE.AmbientLight(0xffffff, 0.55));
+    this.scene.add(key, new THREE.AmbientLight(0xffffff, 0.75));
     this.still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.addEventListener("pointermove", this.onPointer, { passive: true });
     window.addEventListener("pointerdown", this.onPointer, { passive: true });
@@ -185,16 +186,19 @@ export class StickerRenderer {
     const map = new THREE.CanvasTexture(art.face);
     map.colorSpace = THREE.SRGBColorSpace;
     map.anisotropy = this.renderer.capabilities.getMaxAnisotropy();
+    // Satin, not mirror: a soft sheen moves over it, the picture stays
+    // readable – a photo sticker must still show its photo.
     const face = new THREE.MeshPhysicalMaterial({
       map,
-      roughness: 0.55,
-      clearcoat: 1,
-      clearcoatRoughness: 0.14,
+      roughness: 0.85,
+      clearcoat: 0.2,
+      clearcoatRoughness: 0.5,
+      envMapIntensity: 0.45,
       // A little of its own light: the picture keeps its colors, whatever
-      // the lighting – the gloss comes on top.
+      // the lighting – the sheen comes on top.
       emissive: 0xffffff,
       emissiveMap: map,
-      emissiveIntensity: 0.32,
+      emissiveIntensity: 0.42,
     });
     const shadowMap = new THREE.CanvasTexture(art.shadow);
     const shadow = new THREE.MeshBasicMaterial({

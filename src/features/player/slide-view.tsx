@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, m } from "motion/react";
+import { m } from "motion/react";
 import { type CSSProperties, useContext, useEffect, useState } from "react";
 import type { Picture } from "@/features/media/picture";
 import { isDark } from "@/features/themes/theme";
@@ -120,38 +120,85 @@ const WordsSlide = ({ slide }: { slide: Of<"words"> }) => (
 );
 
 /**
- * A List's picture: always in the same place, beside the list (above it on
- * an upright screen) – a polaroid that swaps, tilting, when another point
- * is on.
+ * A List's pictures: a pile of polaroids beside the list (above it on an
+ * upright screen), always in the same place. It fades in with the first
+ * point; the one on top is the point's that is on – with each point the top
+ * one flies off, left or right, and the next lies there. Back to an earlier
+ * point: they fly back onto the pile.
  */
-const ListPicture = ({
-  picture,
-  index,
+const ListPictures = ({
+  pictures,
+  top,
+  shown,
+  delay,
 }: {
-  picture: Picture;
-  index: number;
+  pictures: Picture[];
+  /** Which one lies on top (the ones before it are gone). */
+  top: number;
+  shown: boolean;
+  delay: number;
 }) => {
-  const box = useFitBox(picture, [0.36, 0.66], [0.8, 0.34]);
-  const turn = index % 2 ? 2.5 : -2.5;
+  // One box for all, by the first: a tidy pile.
+  const box = useFitBox(pictures[0], [0.36, 0.66], [0.8, 0.34]);
   return (
-    <div className="relative grid flex-none place-items-center">
-      <AnimatePresence initial={false} mode="popLayout">
-        <m.figure
-          animate={{ opacity: 1, scale: 1, rotate: turn, y: "0%" }}
-          className="rounded-[1.067cqmin] bg-white p-[1.6cqmin] shadow-[0_2cqmin_5cqmin_-1.8cqmin_rgb(0_0_0/0.45)]"
-          exit={{ opacity: 0, scale: 0.85, rotate: -turn * 4, y: "-8%" }}
-          initial={{ opacity: 0, scale: 0.85, rotate: turn * 4, y: "8%" }}
-          key={picture.src}
-          transition={{ type: "spring", stiffness: 300, damping: 22 }}
-        >
-          <Media
-            className="block rounded-[0.4cqmin] object-cover"
-            picture={picture}
-            style={box}
-          />
-        </m.figure>
-      </AnimatePresence>
-    </div>
+    <m.div
+      animate={
+        shown
+          ? { opacity: 1, scale: 1, y: "0%" }
+          : { opacity: 0, scale: 0.85, y: "6%" }
+      }
+      className="relative grid flex-none place-items-center"
+      initial={{ opacity: 0, scale: 0.85, y: "6%" }}
+      transition={{
+        type: "spring",
+        stiffness: 240,
+        damping: 22,
+        delay: shown ? delay : 0,
+      }}
+    >
+      {pictures.map((picture, i) => {
+        const depth = i - top;
+        const side = i % 2 ? 1 : -1;
+        const turn = side * (2.2 + ((i * 3) % 4) * 0.7);
+        return (
+          <m.figure
+            animate={
+              depth < 0
+                ? {
+                    x: `${-side * 55}cqmin`,
+                    y: "-12%",
+                    rotate: -side * 26,
+                    scale: 0.92,
+                    opacity: 0,
+                  }
+                : {
+                    x: `${depth * side * 0.9}cqmin`,
+                    y: `${depth * 1.1}cqmin`,
+                    rotate: depth === 0 ? turn * 0.5 : turn,
+                    scale: 1 - Math.min(depth, 4) * 0.035,
+                    opacity: depth > 3 ? 0 : 1,
+                  }
+            }
+            className="col-start-1 row-start-1 rounded-[1.067cqmin] bg-white p-[1.6cqmin] shadow-[0_2cqmin_5cqmin_-1.8cqmin_rgb(0_0_0/0.45)]"
+            initial={false}
+            key={`${i}-${picture.src}`}
+            style={{ zIndex: pictures.length - i }}
+            transition={{
+              type: "spring",
+              stiffness: 260,
+              damping: 24,
+              opacity: { duration: 0.35 },
+            }}
+          >
+            <Media
+              className="block rounded-[0.4cqmin] object-cover"
+              picture={picture}
+              style={box}
+            />
+          </m.figure>
+        );
+      })}
+    </m.div>
   );
 };
 
@@ -178,14 +225,16 @@ const List = ({
   useEffect(() => setPicked(null), [step]);
   const latest = slide.stepwise ? Math.max(0, step - 1) : 0;
   const on = picked ?? latest;
-  let shownPicture: { picture: Picture; index: number } | null = null;
-  for (let i = Math.min(on, slide.items.length - 1); i >= 0; i--) {
-    const picture = slide.items[i]?.picture;
-    if (picture && (!slide.stepwise || step > i)) {
-      shownPicture = { picture, index: i };
-      break;
-    }
-  }
+  // The pile: every point's picture, in order; on top the latest one up
+  // to the point that is on.
+  const pile = slide.items.flatMap((item, i) =>
+    item.picture ? [{ picture: item.picture, index: i }] : []
+  );
+  const shownPile = !slide.stepwise || step > 0;
+  let top = 0;
+  pile.forEach((entry, k) => {
+    if (entry.index <= on) top = k;
+  });
   return (
     <div className="absolute inset-x-[10.667cqmin] inset-y-[9cqmin] flex items-center justify-center gap-[6cqmin] tall:flex-col-reverse tall:justify-center">
       <div className="relative flex min-w-0 flex-1 flex-col justify-center gap-[4.978cqmin] tall:w-full tall:flex-none">
@@ -289,10 +338,12 @@ const List = ({
           />
         )}
       </div>
-      {pictured && shownPicture && (
-        <ListPicture
-          index={shownPicture.index}
-          picture={shownPicture.picture}
+      {pile.length > 0 && (
+        <ListPictures
+          delay={slide.stepwise ? 0.1 : base + 0.3}
+          pictures={pile.map((entry) => entry.picture)}
+          shown={shownPile}
+          top={top}
         />
       )}
     </div>
