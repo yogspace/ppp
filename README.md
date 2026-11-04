@@ -41,10 +41,9 @@ pnpm install
 cp .env.example .env      # PAYLOAD_SECRET (openssl rand -hex 32), the admin
 make up-db                # MongoDB on localhost:27020
 pnpm dev                  # http://localhost:3000, admin at /admin
-pnpm seed:demo            # stickers, themes, the deck “hello”, the card “for-you”
 ```
 
-- `pnpm seed:demo https://ppp.mxwr.de` seeds production the same way (logs in with `PAYLOAD_ADMIN_EMAIL`/`PAYLOAD_ADMIN_PASSWORD`).
+- **Admin → Seeds → Demo**: “Fill” makes the demo – the deck `/hello` (every design, a few transitions), the card `/for-you`, their stickers and photos (drawn by the code, `src/features/seeds/demo-art.ts`) and four “Demo …” themes – where it is missing; “Replace…” deletes the demo and makes it anew. The same on production.
 - After changing collections: `pnpm generate:types`; after adding admin components: `pnpm generate:importmap`.
 - Checks: `pnpm lint`, `pnpm typecheck`, `pnpm test`.
 - `pnpm payload:sync` fetches production's database and uploads.
