@@ -389,6 +389,7 @@ const Media = ({
       loop
       muted
       playsInline
+      poster={picture.poster}
       src={picture.src}
       style={style}
     />

@@ -3,6 +3,8 @@ import type { CollectionConfig } from "payload";
 import { admins, anyone } from "@/access";
 import { MEDIA_DIR } from "@/lib/media-dir";
 import { cacheFiles } from "./cache";
+import { convertHeic } from "./heic";
+import { describeVideo, dropVideoPoster } from "./video";
 
 /**
  * Every picture and video: what the slides show, the stickers (a PNG with a
@@ -32,8 +34,24 @@ export const Media: CollectionConfig = {
   upload: {
     staticDir: path.join(MEDIA_DIR, "media"),
     modifyResponseHeaders: cacheFiles,
-    mimeTypes: ["image/*", "video/mp4", "video/webm"],
-    adminThumbnail: "small",
+    // Every picture (an iPhone's HEIC too – a JPEG then) and every video
+    // (MP4, MOV, WebM …).
+    mimeTypes: ["image/*", "video/*"],
+    // A picture: its small size; a video: its poster (media/video.ts).
+    adminThumbnail: ({ doc }) => {
+      if (
+        typeof doc.mimeType === "string" &&
+        doc.mimeType.startsWith("video")
+      ) {
+        return typeof doc.poster === "string" ? doc.poster : null;
+      }
+      const sizes = doc.sizes as
+        | Record<string, { url?: string | null }>
+        | undefined;
+      return (
+        sizes?.small?.url ?? (typeof doc.url === "string" ? doc.url : null)
+      );
+    },
     imageSizes: [
       {
         name: "small",
@@ -57,7 +75,20 @@ export const Media: CollectionConfig = {
       },
     ],
   },
+  hooks: {
+    beforeOperation: [convertHeic("JPEG")],
+    beforeChange: [describeVideo],
+    afterDelete: [dropVideoPoster],
+  },
+  // The list's thumbnails need these, whatever columns it shows.
+  forceSelect: { mimeType: true, poster: true, sizes: true, url: true },
   fields: [
+    {
+      // A video's still (media/video.ts) – made on upload.
+      name: "poster",
+      type: "text",
+      admin: { hidden: true },
+    },
     {
       name: "alt",
       type: "text",

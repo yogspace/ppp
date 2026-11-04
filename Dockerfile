@@ -29,6 +29,8 @@ RUN pnpm build
 # The standalone server alone – no pnpm, no dev dependencies.
 FROM node:22-alpine AS runner
 WORKDIR /app
+# ffmpeg: a still from every uploaded video (media/video.ts).
+RUN apk add --no-cache ffmpeg
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 # /data/media: the mount point of the media volume (uploads). It must exist in

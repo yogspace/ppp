@@ -67,6 +67,11 @@ export default buildConfig({
   // The login cookie, `ppp-token` – only sent along from our own pages.
   cookiePrefix: "ppp",
   csrf: [serverUrl()],
+  // Phone videos are big: up to 300 MB a file (Payload's own limit: 20).
+  upload: {
+    limits: { fileSize: 300 * 1024 * 1024 },
+    requestSizeLimit: 310 * 1024 * 1024,
+  },
   // REST only – nothing reads GraphQL.
   graphQL: { disable: true },
   editor,

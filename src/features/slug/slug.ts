@@ -6,7 +6,14 @@
 export const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /** Taken by the site itself. */
-export const RESERVED = new Set(["admin", "api", "next", "fonts", "designs"]);
+export const RESERVED = new Set([
+  "admin",
+  "api",
+  "next",
+  "fonts",
+  "designs",
+  "posters",
+]);
 
 const UMLAUTS: Record<string, string> = {
   ä: "ae",

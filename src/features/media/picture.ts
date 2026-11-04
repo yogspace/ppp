@@ -7,6 +7,8 @@ export type Picture = {
   height: number;
   alt: string;
   video: boolean;
+  /** A video's still, shown until it plays. */
+  poster?: string;
 };
 
 type Resized = {
@@ -43,5 +45,8 @@ export const pictureOf = (
     height: pick?.height ?? media.height ?? (video ? 9 : 1),
     alt: ("alt" in media ? media.alt : "name" in media ? media.name : "") ?? "",
     video,
+    ...(video && "poster" in media && media.poster
+      ? { poster: media.poster }
+      : {}),
   };
 };

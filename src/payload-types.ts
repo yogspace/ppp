@@ -852,6 +852,7 @@ export interface Theme {
  */
 export interface Media {
   id: string;
+  poster?: string | null;
   /**
    * What it shows – read out instead.
    */
@@ -1266,6 +1267,7 @@ export interface DecksSelect<T extends boolean = true> {
  * via the `definition` "media_select".
  */
 export interface MediaSelect<T extends boolean = true> {
+  poster?: T;
   alt?: T;
   updatedAt?: T;
   createdAt?: T;
