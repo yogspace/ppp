@@ -90,7 +90,8 @@ const SPECS: Record<TransitionKind, Spec> = {
   },
   flip: {
     from: (dir) => ({ rotateY: -dir * 90, transformPerspective: 1800 }),
-    in: spring(260, 16, { delay: 0.28 }),
+    // Turns on where the old one stopped, and lands – no wobble.
+    in: { duration: 0.36, ease: [0.15, 0.75, 0.3, 1], delay: 0.29 },
     out: (dir) => ({
       rotateY: dir * 90,
       transformPerspective: 1800,

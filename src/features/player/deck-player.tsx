@@ -226,11 +226,13 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const slide = slides[pos.slide];
   if (!slide) return null;
   // The way on shows once the slide is played through – points shown, stack
-  // thrown, Card opened – or at once on a slide seen before.
-  const ready = pos.slide < furthest || pos.step >= (steps[pos.slide] ?? 0);
+  // thrown, Card opened –, at once on a slide seen before, or from the start
+  // when it takes the steps too (the deck's choice).
+  const total = steps[pos.slide] ?? 0;
+  const ready = deck.stepButton || pos.slide < furthest || pos.step >= total;
   // Where the slide's own button leads.
   const onward: Onward =
-    pos.step < (steps[pos.slide] ?? 0)
+    pos.step < total
       ? "point"
       : pos.slide < slides.length - 1
         ? "next"
@@ -280,6 +282,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
               onBack={prev}
               onOn={onward === "again" ? () => to(0) : next}
               onward={onward}
+              progress={total ? pos.step / total : 1}
               ready={ready}
             />
           </Stage>

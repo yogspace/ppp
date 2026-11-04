@@ -5,6 +5,7 @@ import {
   type CSSProperties,
   type RefObject,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import {
 } from "react";
 import { flushSync } from "react-dom";
 import type { StickerData } from "@/features/player/types";
+import { SlideMoving } from "@/features/transitions/moving";
 import {
   clampPlacement,
   defaultPlacement,
@@ -130,6 +132,10 @@ export const Sticker = ({
   // Drawn in 3D once its sticker is made – the flat picture hides then.
   const stage = useStickerStage();
   const [drawn, setDrawn] = useState(false);
+  // Its slide on the move: flat, in the page, turning along (moving.ts).
+  const flat = useContext(SlideMoving);
+  const flatRef = useRef(flat);
+  flatRef.current = flat;
   // Where it can be grabbed: its die-cut outline, not its box.
   const [hit, setHit] = useState<CSSProperties | null>(null);
   useEffect(() => {
@@ -139,7 +145,7 @@ export const Sticker = ({
     const read = (): StickerPose | null => {
       const box = boxRef.current;
       const art = artRef.current;
-      if (!(box && art)) return null;
+      if (!(box && art) || flatRef.current) return null;
       const rect = art.getBoundingClientRect();
       const own = appear.get();
       if (own < 0.01 || rect.width === 0) return null;
@@ -164,7 +170,8 @@ export const Sticker = ({
       .then((art) => {
         if (!on) return;
         setHit(hitArea(art, aspect));
-        remove = stage.add(art, read);
+        const box = boxRef.current;
+        if (box) remove = stage.add(art, read, box);
         if (remove) setDrawn(true);
       })
       .catch(() => undefined);
@@ -378,10 +385,10 @@ export const Sticker = ({
       >
         <img
           alt={picture.alt}
-          className="sticker-flat size-full transition-opacity duration-150"
+          className="sticker-flat size-full"
           draggable={false}
           src={picture.src}
-          style={{ opacity: drawn ? 0 : 1 }}
+          style={{ opacity: drawn && !flat ? 0 : 1 }}
         />
         {/* What can be grabbed: the outline once it is traced, the box
             until then. */}

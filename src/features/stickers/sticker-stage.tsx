@@ -14,7 +14,11 @@ import type { StickerPose, StickerRenderer } from "./renderer";
 
 type Stage = {
   /** Draws a sticker in 3D – null while there is no 3D (yet, or at all). */
-  add: (art: StickerArt, read: () => StickerPose | null) => (() => void) | null;
+  add: (
+    art: StickerArt,
+    read: () => StickerPose | null,
+    node: Element
+  ) => (() => void) | null;
   /** The 3D canvas is running. */
   ready: boolean;
 };
@@ -54,7 +58,8 @@ export const StickerStage = ({ children }: { children: ReactNode }) => {
 
   const stage = useMemo<Stage>(
     () => ({
-      add: (art, read) => rendererRef.current?.add(art, read) ?? null,
+      add: (art, read, node) =>
+        rendererRef.current?.add(art, read, node) ?? null,
       ready,
     }),
     [ready]

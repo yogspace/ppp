@@ -1,6 +1,12 @@
 "use client";
 
-import { animate, m, useMotionValue, useTransform } from "motion/react";
+import {
+  animate,
+  m,
+  useIsPresent,
+  useMotionValue,
+  useTransform,
+} from "motion/react";
 import { useEffect, useState } from "react";
 import { SlideBackground } from "@/features/backdrop/slide-background";
 import { CardSlide } from "@/features/cards/card-slide";
@@ -12,6 +18,7 @@ import {
   type Move,
   specOf,
 } from "@/features/transitions/frames";
+import { SlideMoving } from "@/features/transitions/moving";
 import { revealClip } from "@/features/transitions/reveal";
 import { EnterDelay } from "./enter";
 import { SlideView } from "./slide-view";
@@ -64,6 +71,20 @@ export const SlideFrame = ({
     return () => controls.stop();
   }, [spec.reveal, progress]);
 
+  // Still in place: its own move done, its wipe or cover gone, not leaving.
+  const present = useIsPresent();
+  const [landed, setLanded] = useState(false);
+  const [uncovered, setUncovered] = useState(false);
+  useEffect(() => {
+    const wait = Math.max(
+      spec.reveal?.duration ?? 0,
+      spec.cover?.duration ?? 0
+    );
+    const timer = window.setTimeout(() => setUncovered(true), wait * 1000);
+    return () => window.clearTimeout(timer);
+  }, [spec.reveal, spec.cover]);
+  const still = present && landed && uncovered;
+
   return (
     <m.section
       animate="center"
@@ -73,34 +94,37 @@ export const SlideFrame = ({
       data-font={slide.look.font}
       exit="exit"
       initial="enter"
+      onAnimationComplete={(name) => name === "center" && setLanded(true)}
       style={{ ...lookVars(slide.look), clipPath }}
       variants={frameVariants}
     >
-      <SlideBackground look={slide.look} />
-      <EnterDelay.Provider value={spec.settle}>
-        {slide.design === "card" ? (
-          <CardSlide
-            arrangement={arrangement}
-            arranging={arranging}
-            onArrange={onArrange}
-            onStep={onStep}
-            slide={slide}
-            step={step}
-          />
-        ) : (
-          <>
-            <SlideView onForward={onStep} slide={slide} step={step} />
-            <StickerLayer
+      <SlideMoving.Provider value={!still}>
+        <SlideBackground look={slide.look} />
+        <EnterDelay.Provider value={spec.settle}>
+          {slide.design === "card" ? (
+            <CardSlide
               arrangement={arrangement}
               arranging={arranging}
-              delay={spec.settle + 0.45}
               onArrange={onArrange}
-              scale={height > width ? TALL_STICKERS : 1}
-              stickers={slide.stickers}
+              onStep={onStep}
+              slide={slide}
+              step={step}
             />
-          </>
-        )}
-      </EnterDelay.Provider>
+          ) : (
+            <>
+              <SlideView onForward={onStep} slide={slide} step={step} />
+              <StickerLayer
+                arrangement={arrangement}
+                arranging={arranging}
+                delay={spec.settle + 0.45}
+                onArrange={onArrange}
+                scale={height > width ? TALL_STICKERS : 1}
+                stickers={slide.stickers}
+              />
+            </>
+          )}
+        </EnterDelay.Provider>
+      </SlideMoving.Provider>
     </m.section>
   );
 };

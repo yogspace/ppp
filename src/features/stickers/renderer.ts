@@ -56,6 +56,8 @@ type Built = {
 type Entry = {
   art: StickerArt;
   read: () => StickerPose | null;
+  /** Its box in the page – later in the page is drawn on top. */
+  node: Element;
   holder: THREE.Group;
   lean: THREE.Group;
   roll: THREE.Group;
@@ -118,6 +120,8 @@ export class StickerRenderer {
       powerPreference: "high-performance",
     });
     this.renderer.setClearColor(0x000000, 0);
+    // Cleared by hand: each sticker is drawn on its own (draw()).
+    this.renderer.autoClear = false;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NeutralToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -223,7 +227,7 @@ export class StickerRenderer {
   }
 
   /** A sticker to draw from now on; the returned function takes it away. */
-  add(art: StickerArt, read: () => StickerPose | null) {
+  add(art: StickerArt, read: () => StickerPose | null, node: Element) {
     const built = this.build(art);
     const sticker = new THREE.Mesh(built.geometry, [built.face, this.rim]);
     const roll = new THREE.Group();
@@ -246,6 +250,7 @@ export class StickerRenderer {
     const entry: Entry = {
       art,
       read,
+      node,
       holder,
       lean,
       roll,
@@ -291,11 +296,36 @@ export class StickerRenderer {
     for (const entry of this.entries) {
       if (this.place(entry, dt)) changed = true;
     }
-    if (changed) this.renderer.render(this.scene, this.camera);
+    if (changed) this.draw();
     this.dirty = false;
     if (this.entries.size) this.frame = requestAnimationFrame(this.tick);
     else this.renderer.clear();
   };
+
+  /**
+   * One sticker after another, each over the ones before – in the page's
+   * order, the one held on top –, each with a fresh depth: they lie on one
+   * another like real ones and never cut into each other when they lean,
+   * and a sticker's shadow falls on the ones below it.
+   */
+  private draw() {
+    const shown = [...this.entries].filter((entry) => entry.holder.visible);
+    shown.sort((a, b) => {
+      const held = Number(a.pose?.lift === 2) - Number(b.pose?.lift === 2);
+      if (held) return held;
+      const order = a.node.compareDocumentPosition(b.node);
+      return order & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
+    for (const entry of shown) entry.holder.visible = false;
+    this.renderer.clear();
+    for (const entry of shown) {
+      entry.holder.visible = true;
+      this.renderer.clearDepth();
+      this.renderer.render(this.scene, this.camera);
+      entry.holder.visible = false;
+    }
+    for (const entry of shown) entry.holder.visible = true;
+  }
 
   /** Puts a sticker where its box is – true when that changed anything. */
   private place(entry: Entry, dt: number) {

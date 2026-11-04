@@ -19,6 +19,35 @@ const NAMES: Record<Exclude<Onward, null>, string> = {
 };
 
 const SPRING = { type: "spring", stiffness: 420, damping: 15 } as const;
+const ICON_SPRING = { type: "spring", stiffness: 500, damping: 18 } as const;
+
+/** › a step, → on to the next slide, ↺ again from the start. */
+const Icon = ({ onward }: { onward: Exclude<Onward, null> }) => (
+  <svg
+    aria-hidden
+    className={cn(
+      "size-[1.1em]",
+      onward === "next" &&
+        "animate-[nudge-right_3.4s_ease-in-out_2.5s_infinite]"
+    )}
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2.8"
+    viewBox="0 0 24 24"
+  >
+    <path
+      d={
+        onward === "again"
+          ? "M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"
+          : onward === "point"
+            ? "M10 6.5l5.5 5.5-5.5 5.5"
+            : "M5 12h13M13 6l6 6-6 6"
+      }
+    />
+  </svg>
+);
 
 type Props = {
   look: ThemeLook;
@@ -36,6 +65,8 @@ type Props = {
    * there, past the first slide.
    */
   ready: boolean;
+  /** How far through its steps the slide is, 0 to 1 – shown while it has some left. */
+  progress: number;
   /** Seconds after the slide arrived. */
   delay: number;
   onOn: () => void;
@@ -55,6 +86,7 @@ export const SlideNav = ({
   label,
   back,
   ready,
+  progress,
   delay,
   onOn,
   onBack,
@@ -111,7 +143,7 @@ export const SlideNav = ({
               animate={{ scale: 1, rotate: -3, opacity: 1 }}
               aria-label={words ? undefined : NAMES[onward]}
               className={cn(
-                "copy pointer-events-auto inline-flex items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",
+                "copy pointer-events-auto relative inline-flex items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",
                 words
                   ? "px-[max(18px,2.6cqmin)] py-[max(9px,1.3cqmin)]"
                   : "size-[max(48px,6.6cqmin)]"
@@ -120,36 +152,85 @@ export const SlideNav = ({
               exit={{ scale: 0, rotate: 12, opacity: 0 }}
               initial={{ scale: 0, rotate: -20, opacity: 0 }}
               key={onward === "again" ? "again" : "on"}
+              // Round while it steps, wider when the next slide has words.
+              layout
               onClick={onOn}
               style={{ background: look.accent, color: ink }}
-              transition={{ ...SPRING, delay: delay + 0.8 }}
+              transition={{
+                ...SPRING,
+                delay: delay + 0.8,
+                layout: { type: "spring", stiffness: 420, damping: 32 },
+              }}
               type="button"
               whileHover={{ scale: 1.07, rotate: 0 }}
               whileTap={{ scale: 0.9 }}
             >
-              {words}
-              <svg
-                aria-hidden
-                className={
-                  onward === "again"
-                    ? "size-[1.1em]"
-                    : "size-[1.1em] animate-[nudge-right_3.4s_ease-in-out_2.5s_infinite]"
-                }
-                fill="none"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2.8"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d={
-                    onward === "again"
-                      ? "M4 12a8 8 0 1 0 2.4-5.7M4 4v4.5h4.5"
-                      : "M5 12h13M13 6l6 6-6 6"
-                  }
-                />
-              </svg>
+              <AnimatePresence initial={false} mode="popLayout">
+                {words && (
+                  <m.span
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -8 }}
+                    initial={{ opacity: 0, x: -8 }}
+                    key="words"
+                    layout="position"
+                  >
+                    {words}
+                  </m.span>
+                )}
+              </AnimatePresence>
+              <AnimatePresence initial={false} mode="popLayout">
+                <m.span
+                  animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                  className="relative grid place-items-center"
+                  exit={{ scale: 0.3, rotate: -90, opacity: 0 }}
+                  initial={{ scale: 0.3, rotate: 90, opacity: 0 }}
+                  key={onward}
+                  layout="position"
+                  transition={ICON_SPRING}
+                >
+                  <Icon onward={onward} />
+                </m.span>
+              </AnimatePresence>
+              {/* While it steps: how far, a ring filling up – full, it goes,
+                  and the arrow on to the next slide comes. */}
+              <AnimatePresence initial={false}>
+                {onward === "point" && (
+                  <m.svg
+                    aria-hidden
+                    className="pointer-events-none absolute inset-[11%] -rotate-90"
+                    exit={{ opacity: 0, scale: 1.25 }}
+                    key="ring"
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    viewBox="0 0 100 100"
+                  >
+                    <circle
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      r="46"
+                      stroke="currentColor"
+                      strokeOpacity="0.22"
+                      strokeWidth="7"
+                    />
+                    <m.circle
+                      animate={{ pathLength: Math.max(progress, 0.001) }}
+                      cx="50"
+                      cy="50"
+                      fill="none"
+                      initial={false}
+                      r="46"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeWidth="7"
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 24,
+                      }}
+                    />
+                  </m.svg>
+                )}
+              </AnimatePresence>
             </m.button>
           )}
         </AnimatePresence>

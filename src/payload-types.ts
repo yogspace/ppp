@@ -167,6 +167,10 @@ export interface Deck {
    */
   nextLabel?: string | null;
   /**
+   * On: the next button is there from the start and also shows each point, throws each picture, opens the card. Its icon changes once the next click goes on to the next slide. Off: it comes once the slide is played through.
+   */
+  stepButton?: boolean | null;
+  /**
    * The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.
    */
   dock?: boolean | null;
@@ -1055,6 +1059,7 @@ export interface DecksSelect<T extends boolean = true> {
   theme?: T;
   transition?: T;
   nextLabel?: T;
+  stepButton?: T;
   dock?: T;
   slides?:
     | T

@@ -150,6 +150,7 @@ export const deckData = (deck: Deck): DeckData => {
       ? deck.transition
       : DEFAULT_TRANSITION,
     dock: deck.dock ?? true,
+    stepButton: deck.stepButton ?? false,
     nextLabel: deck.nextLabel?.trim() ?? "",
     slides: (deck.slides ?? []).flatMap((slide, index) => {
       const data = slideOf(slide, index, deckLook, postmark(deck.createdAt));

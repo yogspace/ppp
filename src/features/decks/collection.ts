@@ -94,6 +94,17 @@ export const Decks: CollectionConfig = {
       },
     },
     {
+      name: "stepButton",
+      type: "checkbox",
+      label: "Next button takes every step",
+      defaultValue: false,
+      admin: {
+        position: "sidebar",
+        description:
+          "On: the next button is there from the start and also shows each point, throws each picture, opens the card. Its icon changes once the next click goes on to the next slide. Off: it comes once the slide is played through.",
+      },
+    },
+    {
       name: "dock",
       type: "checkbox",
       label: "Dock",

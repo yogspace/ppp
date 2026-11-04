@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import type { ThemeLook } from "@/features/themes/theme";
+import { SlideMoving } from "@/features/transitions/moving";
 import { cn } from "@/lib/cn";
 
 /** A color mixed into another, `share` of the first (CSS does the math). */
@@ -26,9 +27,15 @@ const hexMix = (a: string, b: string, share: number) => {
 const Floaties = ({ look }: { look: ThemeLook }) => {
   const ref = useRef<HTMLCanvasElement>(null);
   const { accent, bg, text } = look;
+  // Started once the slide is still (moving.ts), then kept – and faded in.
+  const moving = useContext(SlideMoving);
+  const [go, setGo] = useState(false);
+  useEffect(() => {
+    if (!moving) setGo(true);
+  }, [moving]);
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas) return;
+    if (!(canvas && go)) return;
     let remove: (() => void) | null = null;
     let on = true;
     import("./floaties").then(({ floatInto }) => {
@@ -44,9 +51,14 @@ const Floaties = ({ look }: { look: ThemeLook }) => {
       on = false;
       remove?.();
     };
-  }, [accent, bg, text]);
+  }, [accent, bg, text, go]);
   return (
-    <canvas aria-hidden className="absolute inset-0 size-full" ref={ref} />
+    <canvas
+      aria-hidden
+      className="absolute inset-0 size-full transition-opacity duration-700"
+      ref={ref}
+      style={{ opacity: go ? 1 : 0 }}
+    />
   );
 };
 
