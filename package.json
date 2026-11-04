@@ -16,7 +16,6 @@
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "seed:demo": "node scripts/seed-demo.mjs",
     "payload:db:sync": "bash scripts/sync-db.sh",
     "payload:media:sync": "bash scripts/sync-media.sh",
     "payload:sync": "pnpm payload:media:sync && pnpm payload:db:sync"

@@ -158,6 +158,24 @@
   }
 }
 
+/* The → arrow nudging on now and then (player/arrows.tsx). */
+@keyframes nudge-right {
+  0%,
+  78%,
+  100% {
+    translate: 0 0;
+  }
+  84% {
+    translate: 0.3rem 0;
+  }
+  90% {
+    translate: 0 0;
+  }
+  94% {
+    translate: 0.15rem 0;
+  }
+}
+
 @keyframes ring-turn {
   to {
     rotate: 360deg;

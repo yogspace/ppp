@@ -25,13 +25,52 @@ const Icon = ({ d }: { d: string }) => (
 const button =
   "grid size-11 place-items-center rounded-full transition-[scale,background-color] duration-200 ease-spring hover:bg-white/15 active:scale-90 disabled:opacity-30";
 
+/** The mouse this close to the bottom edge (px) brings the controls up … */
+const DOCK_IN = 72;
+/** … and this far up (px) – or out of the window – sends them away. */
+const DOCK_OUT = 150;
+/** How long they stay after the mouse left (ms) – no flicker. */
+const DOCK_LINGER = 450;
+
+/**
+ * Like macOS's dock: the mouse at the screen's bottom edge brings the
+ * controls up, moving away lets them go again a moment later. Only a mouse
+ * – a finger has the long press.
+ */
+const useDock = () => {
+  const [up, setUp] = useState(false);
+  useEffect(() => {
+    let timer = 0;
+    const away = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setUp(false), DOCK_LINGER);
+    };
+    const move = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      const fromBottom = window.innerHeight - event.clientY;
+      if (fromBottom <= DOCK_IN) {
+        window.clearTimeout(timer);
+        setUp(true);
+      } else if (fromBottom > DOCK_OUT) {
+        away();
+      }
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    document.documentElement.addEventListener("pointerleave", away);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointermove", move);
+      document.documentElement.removeEventListener("pointerleave", away);
+    };
+  }, []);
+  return up;
+};
+
 type Props = {
-  /** Shown – off until asked for (H, or a long press). */
+  /** Pinned (H, or a long press) – else they come up like a dock. */
   shown: boolean;
   count: number;
   slide: number;
-  onPrev: () => void;
-  onNext: () => void;
   onJump: (slide: number) => void;
   canArrange: boolean;
   arranging: boolean;
@@ -40,17 +79,16 @@ type Props = {
 };
 
 /**
- * The deck's controls: back, a dot per slide (the current one a pill),
- * on, full screen – and, logged in, arranging – with a thin bar along the
- * bottom showing how far along it is. Out of sight until asked for: the
- * slides alone on the screen.
+ * The deck's controls: a dot per slide (the current one a pill), full
+ * screen – and, logged in, arranging – with a thin bar along the
+ * bottom showing how far along it is. Out of sight until asked for – the
+ * mouse at the bottom edge, H, or a long press: the slides alone on the
+ * screen.
  */
 export const Controls = ({
   shown: asked,
   count,
   slide,
-  onPrev,
-  onNext,
   onJump,
   canArrange,
   arranging,
@@ -65,7 +103,8 @@ export const Controls = ({
     document.addEventListener("fullscreenchange", change);
     return () => document.removeEventListener("fullscreenchange", change);
   }, []);
-  const shown = asked || arranging;
+  const docked = useDock();
+  const shown = asked || docked || arranging;
 
   return (
     <>
@@ -121,15 +160,6 @@ export const Controls = ({
         initial={false}
         transition={SPRING}
       >
-        <button
-          aria-label="Back"
-          className={button}
-          disabled={slide === 0}
-          onClick={onPrev}
-          type="button"
-        >
-          <Icon d="M15 5l-7 7 7 7" />
-        </button>
         {count <= 24 ? (
           <div className="flex items-center gap-1.5 px-1">
             {Array.from({ length: count }, (_, i) => (
@@ -158,15 +188,6 @@ export const Controls = ({
             {slide + 1} / {count}
           </span>
         )}
-        <button
-          aria-label="Next"
-          className={button}
-          disabled={slide === count - 1}
-          onClick={onNext}
-          type="button"
-        >
-          <Icon d="M9 5l7 7-7 7" />
-        </button>
         {canFullscreen && (
           <button
             aria-label={fullscreen ? "Leave full screen" : "Full screen"}

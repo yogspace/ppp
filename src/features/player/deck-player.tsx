@@ -8,6 +8,7 @@ import { useArrange } from "@/features/stickers/use-arrange";
 import type { Move } from "@/features/transitions/frames";
 import { resolveTransition } from "@/features/transitions/kinds";
 import { TransitionCover } from "@/features/transitions/overlay";
+import { Arrows } from "./arrows";
 import { Controls } from "./controls";
 import { SlideFrame } from "./slide-frame";
 import { Stage } from "./stage";
@@ -68,10 +69,11 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
 
 /**
  * A deck, played: one slide at a time on the stage, each coming in with its
- * transition. On: → ↓ space, a click or tap on the right, a swipe to the
- * left. Back: ← ↑, a click or tap on the left, a swipe to the right. Home and
- * End, F for full screen, H (or a long press) shows the controls, E
- * arranges the stickers (logged in). Every slide
+ * transition. Never on its own, and never by a stray click: on is the →
+ * button, → ↓ space Enter, or a swipe to the left; back the ← button, ← ↑,
+ * or a swipe to the right. Home and End, F for full screen, H (or a long
+ * press, or the mouse at the bottom edge) shows the controls, E arranges the
+ * stickers (logged in). Every slide
  * has its address (`/talk`, `/talk/1` …): written as it changes, without
  * loading anew – the browser's back goes a slide back.
  */
@@ -178,9 +180,9 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     return () => window.removeEventListener("keydown", key);
   }, [next, prev, to, slides.length, canArrange, setControls]);
 
-  // A tap or click: on the right on, on the left back; a swipe the same.
-  // Not on a sticker (it is thrown), a button or a link.
-  // A long press (no keyboard on a phone) shows or hides the controls.
+  // A swipe goes on or back – a plain tap or click does nothing (the arrows
+  // do). Not on a sticker (it is thrown), a button or a link. A long press
+  // (no keyboard on a phone) shows or hides the controls.
   const down = useRef<{
     id: number;
     x: number;
@@ -221,11 +223,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) {
       if (dx < 0) next();
       else prev();
-      return;
     }
-    if (Math.hypot(dx, dy) > 12 || arranging) return;
-    if (event.clientX < window.innerWidth * 0.3) prev();
-    else next();
   };
 
   const slide = slides[pos.slide];
@@ -265,14 +263,21 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
             <TransitionCover key={move.n} look={slide.look} move={move} />
           </Stage>
         </main>
+        <Arrows
+          canBack={pos.slide > 0 || pos.step > 0}
+          canOn={
+            pos.slide < slides.length - 1 || pos.step < (steps[pos.slide] ?? 0)
+          }
+          look={slide.look}
+          onBack={prev}
+          onOn={next}
+        />
         <Controls
           arranging={arranging}
           canArrange={canArrange}
           count={slides.length}
           onArrange={() => setArranging((a) => !a)}
           onJump={to}
-          onNext={next}
-          onPrev={prev}
           saveState={state}
           shown={controls}
           slide={pos.slide}

@@ -8,6 +8,8 @@ import { Users } from "@/features/admin/users";
 import { Cards } from "@/features/cards/collection";
 import { Decks } from "@/features/decks/collection";
 import { Media } from "@/features/media/collection";
+import { SEEDS_PATH } from "@/features/seeds/definitions";
+import { seedEndpoint } from "@/features/seeds/endpoint";
 import { Themes } from "@/features/themes/collection";
 import { editor } from "@/lib/editor";
 import { serverUrl } from "@/lib/server-url";
@@ -22,6 +24,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
  * - themes   color schemes, fonts and backgrounds (features/themes)
  * - media    pictures, stickers, background videos
  * - users    the admin login
+ * - seeds    the demo deck and card, from the admin's Seeds page
  *
  * Everything that differs between machines comes from the environment (see
  * .env.example).
@@ -34,6 +37,17 @@ export default buildConfig({
       titleSuffix: "· ppp",
       icons: [{ rel: "icon", type: "image/svg+xml", url: "/icon.svg" }],
     },
+    components: {
+      // “Seeds” at the end of the navigation – the demo, at a click.
+      afterNavLinks: ["@/features/seeds/nav-link#SeedsNavLink"],
+      views: {
+        seeds: {
+          Component: "@/features/seeds/view#SeedsView",
+          path: SEEDS_PATH,
+          meta: { title: "Seeds" },
+        },
+      },
+    },
     livePreview: {
       breakpoints: [
         { label: "Laptop", name: "laptop", width: 1440, height: 900 },
@@ -43,6 +57,7 @@ export default buildConfig({
   },
   // The admin's groups follow this order.
   collections: [Decks, Cards, Media, Themes, Users],
+  endpoints: [seedEndpoint],
   // The login cookie, `ppp-token` – only sent along from our own pages.
   cookiePrefix: "ppp",
   csrf: [serverUrl()],

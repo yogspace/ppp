@@ -9,6 +9,8 @@ import { StrikethroughFeatureClient as StrikethroughFeatureClient_e70f5e05f09f93
 import { LinkFeatureClient as LinkFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { InlineToolbarFeatureClient as InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { ColorField as ColorField_0fa40e328ede57d7fe071d760ec672ec } from '@/features/themes/color-field'
+import { SeedsNavLink as SeedsNavLink_4fc7ac8c62af6f477388f54176015e03 } from '@/features/seeds/nav-link'
+import { SeedsView as SeedsView_549b4db3d3d5f35204643e303b84c42d } from '@/features/seeds/view'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -24,5 +26,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#LinkFeatureClient": LinkFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@payloadcms/richtext-lexical/client#InlineToolbarFeatureClient": InlineToolbarFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/features/themes/color-field#ColorField": ColorField_0fa40e328ede57d7fe071d760ec672ec,
+  "@/features/seeds/nav-link#SeedsNavLink": SeedsNavLink_4fc7ac8c62af6f477388f54176015e03,
+  "@/features/seeds/view#SeedsView": SeedsView_549b4db3d3d5f35204643e303b84c42d,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
