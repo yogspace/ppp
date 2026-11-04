@@ -20,3 +20,11 @@
   font-weight: 400;
   font-display: swap;
 }
+
+/* Buttons beside fields (the deck's share field): Payload's `subtle` style
+   without its thin border – as in the portfolio. */
+.btn.field-btn {
+  --btn-border: none;
+  --hover-btn-border: none;
+  border: none;
+}

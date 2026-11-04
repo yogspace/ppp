@@ -2,180 +2,173 @@
 
 import { Button, useFormFields } from "@payloadcms/ui";
 import QRCode from "qrcode";
-import { type CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const COLORS = { dark: "#0b1533", light: "#ffffff" };
+const muted = { color: "var(--theme-elevation-400)", fontSize: 12, margin: 0 };
 
-const styles = {
-  box: { marginBottom: "1.5rem" },
-  label: {
-    margin: "0 0 0.5rem",
-    fontSize: "0.8rem",
-    color: "var(--theme-elevation-600)",
-  },
-  row: { display: "flex", gap: "0.75rem", alignItems: "flex-start" },
-  side: { display: "flex", flex: 1, minWidth: 0, flexDirection: "column" },
-  code: {
-    display: "block",
-    flex: "none",
-    width: 88,
-    height: 88,
-    borderRadius: "var(--style-radius-m)",
-    border: "1px solid var(--theme-elevation-100)",
-    background: COLORS.light,
-  },
-  url: {
-    margin: "0 0 0.5rem",
-    fontFamily: "ui-monospace, monospace",
-    fontSize: "0.75rem",
-    overflowWrap: "anywhere",
-    color: "var(--theme-elevation-700)",
-  },
-  buttons: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "0.4rem",
-  },
-  empty: {
-    margin: 0,
-    fontSize: "0.85rem",
-    color: "var(--theme-elevation-600)",
-  },
-} satisfies Record<string, CSSProperties>;
-
-/** A file to the browser's downloads. */
-const save = (href: string, name: string) => {
-  const a = document.createElement("a");
-  a.href = href;
-  a.download = name;
-  a.click();
+/** For a second: what was just done. */
+const useFlash = () => {
+  const [flash, setFlash] = useState<string | null>(null);
+  const show = (what: string) => {
+    setFlash(what);
+    window.setTimeout(() => setFlash(null), 1500);
+  };
+  return [flash, show] as const;
 };
 
 /**
- * The deck's address to share, in the sidebar: a QR code of it, the link –
- * to copy – and the code as a picture, to copy or to download (PNG, SVG).
- * The saved address only: an unsaved one leads nowhere yet.
+ * The deck's address to share, in the sidebar – as in the portfolio: the
+ * link (read-only, copy, open), below it its QR code, to copy as a picture
+ * or download as a PNG. The saved address only: an unsaved one leads nowhere
+ * yet.
  */
 export const ShareField = () => {
   const slug = useFormFields(
     ([fields]) => fields.slug?.initialValue as string | undefined
   );
   const [origin, setOrigin] = useState("");
-  const [svg, setSvg] = useState("");
-  const [done, setDone] = useState<string | null>(null);
+  const [code, setCode] = useState<string | null>(null);
+  const [flash, show] = useFlash();
   useEffect(() => setOrigin(window.location.origin), []);
   const url = slug && origin ? `${origin}/${slug}` : "";
 
   useEffect(() => {
     if (!url) return;
     let on = true;
-    QRCode.toString(url, {
-      type: "svg",
-      margin: 1,
-      errorCorrectionLevel: "M",
-      color: COLORS,
-    }).then((code) => on && setSvg(code));
+    QRCode.toDataURL(url, { width: 512, margin: 2 })
+      .then((png) => on && setCode(png))
+      .catch(() => undefined);
     return () => {
       on = false;
     };
   }, [url]);
 
-  const say = (what: string) => {
-    setDone(what);
-    window.setTimeout(() => setDone(null), 1800);
-  };
-
-  const png = () =>
-    QRCode.toDataURL(url, {
-      width: 1024,
-      margin: 2,
-      errorCorrectionLevel: "M",
-      color: COLORS,
-    });
-
   if (!url) {
     return (
-      <div style={styles.box}>
-        <p style={styles.label}>Share</p>
-        <p style={styles.empty}>Save the deck – then its QR code is here.</p>
+      <div style={{ marginBottom: "1.5rem" }}>
+        <p style={muted}>The QR code appears here after the first save.</p>
       </div>
     );
   }
 
   return (
-    <div style={styles.box}>
-      <p style={styles.label}>Share</p>
-      <div style={styles.row}>
-        {svg ? (
-          <img
-            alt={`QR code for ${url}`}
-            src={`data:image/svg+xml;utf8,${encodeURIComponent(svg)}`}
-            style={styles.code}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+        paddingBlock: 12,
+        marginBottom: "1rem",
+      }}
+    >
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div className="field-type text" style={{ flex: 1, margin: 0 }}>
+          <input
+            onFocus={(event) => event.target.select()}
+            readOnly
+            type="text"
+            value={url}
           />
-        ) : (
-          <span style={styles.code} />
-        )}
-        <div style={styles.side}>
-          <p style={styles.url}>{url}</p>
-          <div style={styles.buttons}>
+        </div>
+        <Button
+          buttonStyle="subtle"
+          className="field-btn"
+          margin={false}
+          onClick={async () => {
+            await navigator.clipboard.writeText(url);
+            show("link");
+          }}
+          size="medium"
+          type="button"
+        >
+          {flash === "link" ? "Copied ✓" : "Copy"}
+        </Button>
+        <Button
+          aria-label="Open the page"
+          buttonStyle="subtle"
+          className="field-btn"
+          el="anchor"
+          margin={false}
+          newTab
+          size="medium"
+          tooltip="Open the page"
+          url={url}
+        >
+          <svg
+            aria-hidden="true"
+            fill="none"
+            height="14"
+            stroke="currentColor"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            width="14"
+          >
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" x2="21" y1="14" y2="3" />
+          </svg>
+        </Button>
+      </div>
+      {code ? (
+        <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <img
+            alt="QR code"
+            src={code}
+            style={{
+              width: 80,
+              height: 80,
+              imageRendering: "pixelated",
+              borderRadius: 4,
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <Button
-              buttonStyle="secondary"
-              margin={false}
-              onClick={async () => {
-                await navigator.clipboard.writeText(url);
-                say("link");
-              }}
-              size="small"
-            >
-              {done === "link" ? "Copied ✓" : "Copy link"}
-            </Button>
-            <Button
-              buttonStyle="secondary"
+              buttonStyle="subtle"
+              className="field-btn"
               margin={false}
               onClick={async () => {
                 try {
-                  const blob = await (await fetch(await png())).blob();
+                  const blob = await (await fetch(code)).blob();
                   await navigator.clipboard.write([
                     new ClipboardItem({ "image/png": blob }),
                   ]);
-                  say("code");
+                  show("code");
                 } catch {
-                  say("no-copy");
+                  show("no-copy");
                 }
               }}
-              size="small"
+              size="medium"
+              type="button"
             >
-              {done === "code"
+              {flash === "code"
                 ? "Copied ✓"
-                : done === "no-copy"
+                : flash === "no-copy"
                   ? "Not here ✗"
-                  : "Copy QR"}
+                  : "Copy as image"}
             </Button>
             <Button
-              buttonStyle="secondary"
-              margin={false}
-              onClick={async () => save(await png(), `${slug}-qr.png`)}
-              size="small"
-            >
-              PNG ↓
-            </Button>
-            <Button
-              buttonStyle="secondary"
+              buttonStyle="subtle"
+              className="field-btn"
               margin={false}
               onClick={() => {
-                const href = URL.createObjectURL(
-                  new Blob([svg], { type: "image/svg+xml" })
-                );
-                save(href, `${slug}-qr.svg`);
-                window.setTimeout(() => URL.revokeObjectURL(href), 1000);
+                const a = document.createElement("a");
+                a.href = code;
+                a.download = `${slug}-qr.png`;
+                a.click();
               }}
-              size="small"
+              size="medium"
+              type="button"
             >
-              SVG ↓
+              Download
             </Button>
           </div>
         </div>
-      </div>
+      ) : (
+        <p style={muted}>Generating QR…</p>
+      )}
     </div>
   );
 };

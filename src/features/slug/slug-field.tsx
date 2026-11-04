@@ -118,7 +118,8 @@ export const SlugField = ({ field, path }: TextFieldClientProps) => {
         </label>
         <Button
           aria-label={locked ? "Unlock the address" : "Lock the address"}
-          buttonStyle="secondary"
+          buttonStyle="subtle"
+          className="field-btn"
           icon={<Padlock open={!locked} />}
           margin={false}
           onClick={() => setLocked((l) => !l)}
@@ -127,7 +128,8 @@ export const SlugField = ({ field, path }: TextFieldClientProps) => {
         />
         <Button
           aria-label="Open the page"
-          buttonStyle="secondary"
+          buttonStyle="subtle"
+          className="field-btn"
           disabled={!saved}
           el="anchor"
           icon={<ExternalLinkIcon />}

@@ -141,7 +141,7 @@ const List = ({
         {slide.items.map((item, i) => {
           const shown = !slide.stepwise || step > i;
           const next = waiting && i === step;
-          const wait = slide.stepwise ? 0 : base + 0.15 + i * 0.06;
+          const wait = slide.stepwise ? 0 : base + 0.08 + i * 0.05;
           return (
             <li className="relative" key={`${i}-${item}`}>
               {next && (
@@ -167,26 +167,31 @@ const List = ({
               <m.span
                 animate={
                   shown
-                    ? { opacity: 1, y: "0%", scale: 1 }
-                    : { opacity: 0, y: "40%", scale: 0.94 }
+                    ? { opacity: 1, x: "0%", rotate: i % 2 ? 0.8 : -0.8 }
+                    : { opacity: 0, x: "-30%", rotate: -5 }
                 }
                 className="flex w-fit items-center gap-[0.55em] rounded-[1.2em] py-[0.38em] pr-[0.8em] pl-[0.5em] shadow-[0_0.5cqmin_1.4cqmin_-0.6cqmin_rgb(0_0_0/0.35)]"
-                initial={{ opacity: 0, y: "40%", scale: 0.94 }}
+                initial={{ opacity: 0, x: "-30%", rotate: -5 }}
                 style={{
                   background: "var(--paper)",
                   color: "var(--paper-ink)",
-                  rotate: i % 2 ? 0.8 : -0.8,
                 }}
                 transition={{
-                  duration: 0.26,
-                  ease: [0.2, 0.8, 0.2, 1],
-                  delay: shown ? wait : 0,
+                  default: {
+                    type: "spring",
+                    stiffness: 520,
+                    damping: 30,
+                    delay: shown ? wait : 0,
+                  },
+                  opacity: { duration: 0.15, delay: shown ? wait : 0 },
                 }}
               >
                 <m.span
-                  animate={shown ? { scale: 1 } : { scale: 0 }}
+                  animate={
+                    shown ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -90 }
+                  }
                   className="grid size-[1.9em] flex-none place-items-center rounded-full border-[0.14em] border-white text-[0.6em] font-bold"
-                  initial={{ scale: 0 }}
+                  initial={{ scale: 0, rotate: -90 }}
                   style={{ background: accent, color: onAccent }}
                   transition={{
                     type: "spring",

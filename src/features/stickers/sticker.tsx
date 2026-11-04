@@ -2,6 +2,7 @@
 
 import { animate, m, useMotionValue } from "motion/react";
 import {
+  type CSSProperties,
   type RefObject,
   useCallback,
   useEffect,
@@ -16,7 +17,8 @@ import {
   defaultPlacement,
   type Placement,
 } from "./arrangement";
-import { stickerArt } from "./art";
+import { type StickerArt, stickerArt } from "./art";
+import { ringArea } from "./outline";
 import type { StickerPose } from "./renderer";
 import { useStickerStage } from "./sticker-stage";
 
@@ -41,6 +43,32 @@ type Props = {
 };
 
 type Point = { x: number; y: number };
+
+/**
+ * The area a sticker is grabbed by: its outline (the largest piece) as a
+ * clip path on a box as big as its face – the face is wider than the
+ * picture by the rim, and centred on it. `aspect`: the picture's width /
+ * height.
+ */
+const hitArea = (art: StickerArt, aspect: number): CSSProperties | null => {
+  const ring = [...art.rings].sort((a, b) => ringArea(b) - ringArea(a))[0];
+  if (!ring) return null;
+  const width = 1 / art.pictureShare;
+  const height = (art.aspect * aspect) / art.pictureShare;
+  const points = ring
+    .map(
+      ([x, y]) =>
+        `${(x * 100).toFixed(2)}% ${((y / art.aspect) * 100).toFixed(2)}%`
+    )
+    .join(", ");
+  return {
+    left: `${((1 - width) / 2) * 100}%`,
+    top: `${((1 - height) / 2) * 100}%`,
+    width: `${width * 100}%`,
+    height: `${height * 100}%`,
+    clipPath: `polygon(${points})`,
+  };
+};
 
 const SPRING = { type: "spring", stiffness: 260, damping: 15 } as const;
 
@@ -98,6 +126,8 @@ export const Sticker = ({
   // Drawn in 3D once its sticker is made – the flat picture hides then.
   const stage = useStickerStage();
   const [drawn, setDrawn] = useState(false);
+  // Where it can be grabbed: its die-cut outline, not its box.
+  const [hit, setHit] = useState<CSSProperties | null>(null);
   useEffect(() => {
     if (!stage.ready) return;
     let remove: (() => void) | null = null;
@@ -129,6 +159,7 @@ export const Sticker = ({
     stickerArt(picture.src)
       .then((art) => {
         if (!on) return;
+        setHit(hitArea(art, aspect));
         remove = stage.add(art, read);
         if (remove) setDrawn(true);
       })
@@ -138,7 +169,7 @@ export const Sticker = ({
       remove?.();
       setDrawn(false);
     };
-  }, [stage, picture.src, appear, spin]);
+  }, [stage, picture.src, appear, spin, aspect]);
 
   /** The live offset made the placement – the box moves, nothing jumps. */
   const commit = useCallback(() => {
@@ -203,7 +234,7 @@ export const Sticker = ({
     if (event.button > 0 || held.current) return;
     // Not a click on the slide: the deck stays where it is.
     event.stopPropagation();
-    event.currentTarget.setPointerCapture(event.pointerId);
+    (event.target as Element).setPointerCapture(event.pointerId);
     for (const t of throws.current) t.stop();
     throws.current = [];
     busyRef.current = true;
@@ -297,7 +328,7 @@ export const Sticker = ({
 
   return (
     <m.div
-      className="pointer-events-auto absolute touch-none select-none data-arranging:cursor-move data-arranging:outline-2 data-arranging:outline-offset-4 data-arranging:outline-dashed data-arranging:outline-current/40 hover:cursor-grab active:cursor-grabbing"
+      className="pointer-events-none absolute touch-none select-none data-arranging:outline-2 data-arranging:outline-offset-4 data-arranging:outline-dashed data-arranging:outline-current/40"
       data-arranging={arranging || undefined}
       data-sticker
       // A card under it must not turn when it is let go.
@@ -347,6 +378,14 @@ export const Sticker = ({
           draggable={false}
           src={picture.src}
           style={{ opacity: drawn ? 0 : 1 }}
+        />
+        {/* What can be grabbed: the outline once it is traced, the box
+            until then. */}
+        <div
+          aria-hidden
+          className="pointer-events-auto absolute inset-0 cursor-grab touch-none active:cursor-grabbing data-arranging:cursor-move"
+          data-arranging={arranging || undefined}
+          style={hit ?? undefined}
         />
       </m.div>
     </m.div>
