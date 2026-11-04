@@ -1,0 +1,224 @@
+"use client";
+
+import { AnimatePresence, m } from "motion/react";
+import { useEffect, useState } from "react";
+import type { SaveState } from "@/features/stickers/use-arrange";
+import { cn } from "@/lib/cn";
+
+const SPRING = { type: "spring", stiffness: 500, damping: 30 } as const;
+
+const Icon = ({ d }: { d: string }) => (
+  <svg
+    aria-hidden
+    className="size-5"
+    fill="none"
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="2.2"
+    viewBox="0 0 24 24"
+  >
+    <path d={d} />
+  </svg>
+);
+
+const button =
+  "grid size-11 place-items-center rounded-full transition-[scale,background-color] duration-200 ease-spring hover:bg-white/15 active:scale-90 disabled:opacity-30";
+
+/** Shown while the pointer moves, gone after a while without. */
+const useAwake = (ms = 2400) => {
+  const [awake, setAwake] = useState(true);
+  useEffect(() => {
+    let timer = window.setTimeout(() => setAwake(false), ms);
+    const wake = () => {
+      setAwake(true);
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setAwake(false), ms);
+    };
+    window.addEventListener("pointermove", wake, { passive: true });
+    window.addEventListener("pointerdown", wake, { passive: true });
+    window.addEventListener("keydown", wake);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("pointermove", wake);
+      window.removeEventListener("pointerdown", wake);
+      window.removeEventListener("keydown", wake);
+    };
+  }, [ms]);
+  return awake;
+};
+
+type Props = {
+  count: number;
+  slide: number;
+  onPrev: () => void;
+  onNext: () => void;
+  onJump: (slide: number) => void;
+  canArrange: boolean;
+  arranging: boolean;
+  onArrange: () => void;
+  saveState: SaveState;
+};
+
+/**
+ * The deck's controls: back, a dot per slide (the current one a pill),
+ * on, full screen – and, logged in, arranging. They hide when nothing
+ * moves; a thin bar at the bottom always shows how far along it is.
+ */
+export const Controls = ({
+  count,
+  slide,
+  onPrev,
+  onNext,
+  onJump,
+  canArrange,
+  arranging,
+  onArrange,
+  saveState,
+}: Props) => {
+  const awake = useAwake();
+  const [fullscreen, setFullscreen] = useState(false);
+  const [canFullscreen, setCanFullscreen] = useState(false);
+  useEffect(() => {
+    setCanFullscreen(Boolean(document.fullscreenEnabled));
+    const change = () => setFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", change);
+    return () => document.removeEventListener("fullscreenchange", change);
+  }, []);
+  const shown = awake || arranging;
+
+  return (
+    <>
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[3px] bg-black/5"
+      >
+        <m.i
+          animate={{ scaleX: count > 1 ? slide / (count - 1) : 1 }}
+          className="block h-full origin-left bg-(--accent)"
+          initial={false}
+          transition={SPRING}
+        />
+      </div>
+
+      <AnimatePresence>
+        {arranging && (
+          <m.div
+            animate={{ y: 0, opacity: 1 }}
+            className="fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-40 flex justify-center px-4"
+            exit={{ y: -30, opacity: 0 }}
+            initial={{ y: -30, opacity: 0 }}
+            transition={SPRING}
+          >
+            <p className="rounded-full bg-neutral-950/85 px-4 py-2 text-center text-sm text-white shadow-lg backdrop-blur">
+              Arranging – drag the stickers where they belong · double-click
+              puts one back ·{" "}
+              <span className="opacity-70">
+                {saveState === "saving"
+                  ? "saving…"
+                  : saveState === "saved"
+                    ? "saved ✓"
+                    : saveState === "failed"
+                      ? "couldn't save ✗"
+                      : "E when done"}
+              </span>
+            </p>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      <m.nav
+        animate={{ y: shown ? 0 : 24, opacity: shown ? 1 : 0 }}
+        aria-label="Slides"
+        className={cn(
+          "fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-neutral-950/80 p-1 text-white shadow-[0_0.5rem_1.5rem_-0.5rem_rgb(0_0_0/0.5)] backdrop-blur",
+          !shown && "pointer-events-none"
+        )}
+        data-controls
+        initial={false}
+        transition={SPRING}
+      >
+        <button
+          aria-label="Back"
+          className={button}
+          disabled={slide === 0}
+          onClick={onPrev}
+          type="button"
+        >
+          <Icon d="M15 5l-7 7 7 7" />
+        </button>
+        {count <= 24 ? (
+          <div className="flex items-center gap-1.5 px-1">
+            {Array.from({ length: count }, (_, i) => (
+              <button
+                aria-current={i === slide ? "step" : undefined}
+                aria-label={`Slide ${i + 1}`}
+                className="relative grid h-11 w-3 place-items-center"
+                key={i}
+                onClick={() => onJump(i)}
+                type="button"
+              >
+                {i === slide ? (
+                  <m.i
+                    className="block h-2.5 w-5 rounded-full bg-white"
+                    layoutId="current-dot"
+                    transition={SPRING}
+                  />
+                ) : (
+                  <i className="block size-2 rounded-full bg-white/40 transition-[scale] duration-200 ease-spring hover:scale-150" />
+                )}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <span className="px-2 text-sm tabular-nums">
+            {slide + 1} / {count}
+          </span>
+        )}
+        <button
+          aria-label="Next"
+          className={button}
+          disabled={slide === count - 1}
+          onClick={onNext}
+          type="button"
+        >
+          <Icon d="M9 5l7 7-7 7" />
+        </button>
+        {canFullscreen && (
+          <button
+            aria-label={fullscreen ? "Leave full screen" : "Full screen"}
+            className={button}
+            onClick={() =>
+              fullscreen
+                ? document.exitFullscreen()
+                : document.documentElement.requestFullscreen()
+            }
+            type="button"
+          >
+            <Icon
+              d={
+                fullscreen
+                  ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"
+                  : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"
+              }
+            />
+          </button>
+        )}
+        {canArrange && (
+          <button
+            aria-label="Arrange stickers"
+            aria-pressed={arranging}
+            className={cn(
+              button,
+              arranging && "bg-white text-neutral-950 hover:bg-white"
+            )}
+            onClick={onArrange}
+            type="button"
+          >
+            <Icon d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" />
+          </button>
+        )}
+      </m.nav>
+    </>
+  );
+};

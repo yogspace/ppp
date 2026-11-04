@@ -1,0 +1,29 @@
+# Logs
+*.log
+
+node_modules
+dist
+
+# Editors and systems
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Local Claude Code settings
+.claude/
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Environment (see .env.example)
+.env
+
+# Uploads – locally; on the server the media volume
+media/
+
+# Fonts (ITF Free Font License): fetched by scripts/prepare.mjs, must not
+# be redistributed – so not in the (public) repo.
+public/fonts/

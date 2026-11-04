@@ -1,0 +1,70 @@
+services:
+  # Service name = host name in the proxy network: the proxy stack routes
+  # ppp.mxwr.de → ppp:3000. Must be unique in the `web` network.
+  ppp:
+    image: ghcr.io/yogspace/ppp:latest
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: mongodb://mongo:27017/ppp
+      MEDIA_DIR: /data/media
+    # Secrets (see .env.example) – /opt/apps/ppp/.env, written by the deploy.
+    env_file:
+      - .env
+    # Uploads (pictures, stickers) outlive the deploys here;
+    # `pnpm payload:media:sync` fetches them.
+    volumes:
+      - media:/data/media
+    depends_on:
+      mongo:
+        condition: service_healthy
+    mem_limit: 512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - internal
+      - web
+
+  # Decks, themes, the admin. Only in the internal network – not reachable
+  # from outside; `pnpm payload:db:sync` goes over SSH.
+  mongo:
+    # Pinned: Linux ≥ 6.19 turns on CET shadow stacks, and MongoDB 8.x
+    # coroutines swap the stack pointer by hand → SIGSEGV crash loop (MongoDB
+    # SERVER-121912). Workaround: shadow stacks off for mongod
+    # (GLIBC_TUNABLES). Do NOT switch to `mongo:8.0` – that refuses to start on
+    # ≥ 6.19. Unpin once MongoDB ships a fix.
+    image: mongo:8.2.9
+    restart: unless-stopped
+    # A small cache: a few decks and themes.
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    environment:
+      GLIBC_TUNABLES: "glibc.cpu.hwcaps=-SHSTK"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 512m
+    # Logs on, rotated – a silent crash loop must stay visible.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - internal
+
+volumes:
+  mongo_data:
+  media:
+
+networks:
+  internal:
+  # Shared network of the proxy stack (/opt/apps/proxy), created externally.
+  web:
+    external: true
