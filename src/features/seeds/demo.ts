@@ -220,7 +220,8 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
   }
 
   const media = await pictures(payload);
-  const look = await themes(payload);
+  const themed = await themes(payload);
+  const look = themed.ids;
   const m = media.ids;
   const stickers = (...names: string[]) =>
     names.map((name) => ({ image: m[name] }));
@@ -351,6 +352,6 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
     `deck /${DEMO_DECK} ${deckThere ? "kept" : "made"}`,
     `card /${DEMO_CARD} ${cardThere ? "kept" : "made"}`,
     `${media.made} of ${ALL_PICTURES.length} pictures drawn`,
-    `${look.made} of ${Object.keys(THEMES).length} themes made`,
+    `${themed.made} of ${Object.keys(THEMES).length} themes made`,
   ].join(" · ");
 };
