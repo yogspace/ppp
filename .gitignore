@@ -22,7 +22,7 @@ next-env.d.ts
 .env
 
 # Uploads – locally; on the server the media volume
-media/
+/media/
 
 # Fonts (ITF Free Font License): fetched by scripts/prepare.mjs, must not
 # be redistributed – so not in the (public) repo.
