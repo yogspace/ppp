@@ -819,6 +819,74 @@ export interface Deck {
       }
     | {
         /**
+         * Above the card – optional.
+         */
+        heading?: string | null;
+        url: string;
+        /**
+         * Big on the card – what's behind the link.
+         */
+        title: string;
+        /**
+         * Small, under the title.
+         */
+        note?: string | null;
+        label?: string | null;
+        /**
+         * Optional – on top of the card.
+         */
+        image?: (string | null) | Media;
+        /**
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         */
+        stickers?:
+          | {
+              sticker: string | Sticker;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Only this slide's. Empty: the deck's default.
+         */
+        theme?: (string | null) | Theme;
+        /**
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
+         */
+        transition?:
+          | (
+              | 'swipe'
+              | 'boing'
+              | 'pop'
+              | 'toss'
+              | 'flip'
+              | 'hinge'
+              | 'jelly'
+              | 'zoom'
+              | 'blob'
+              | 'confetti'
+              | 'curtain'
+              | 'fade'
+              | 'cut'
+              | 'spinner'
+              | 'checkerboard'
+              | 'blinds'
+              | 'dissolve'
+              | 'star'
+              | 'heart'
+              | 'clock'
+              | 'surprise'
+            )
+          | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'link';
+      }
+    | {
+        /**
          * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
@@ -1320,6 +1388,27 @@ export interface DecksSelect<T extends boolean = true> {
               prize?: T;
               image?: T;
               footnote?: T;
+              stickers?:
+                | T
+                | {
+                    sticker?: T;
+                    id?: T;
+                  };
+              theme?: T;
+              transition?: T;
+              nextLabel?: T;
+              id?: T;
+              blockName?: T;
+            };
+        link?:
+          | T
+          | {
+              heading?: T;
+              url?: T;
+              title?: T;
+              note?: T;
+              label?: T;
+              image?: T;
               stickers?:
                 | T
                 | {

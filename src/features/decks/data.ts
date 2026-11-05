@@ -133,6 +133,17 @@ const slideOf = (
         message: slide.message,
         from: slide.from ?? "",
       };
+    case "link":
+      return {
+        ...base,
+        design: "link",
+        heading: slide.heading ?? "",
+        url: slide.url,
+        title: slide.title,
+        note: slide.note ?? "",
+        label: slide.label ?? "",
+        image: pictureOf(slide.image),
+      };
     case "scratch":
       return {
         ...base,

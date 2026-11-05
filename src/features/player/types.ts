@@ -65,6 +65,16 @@ export type SlideData = SlideBase &
       }
     | { design: "quote"; quote: string; author: string }
     | {
+        design: "link";
+        heading: string;
+        url: string;
+        title: string;
+        note: string;
+        /** The button's words – empty: “Open”. */
+        label: string;
+        image: Picture | null;
+      }
+    | {
         design: "scratch";
         heading: string;
         kicker: string;

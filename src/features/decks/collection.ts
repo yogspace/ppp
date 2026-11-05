@@ -9,6 +9,7 @@ import {
 import { serverUrl } from "@/lib/server-url";
 import type { Deck } from "@/payload-types";
 import { DESIGNS } from "./designs";
+import { keepArrangement, noteDuplicate } from "./duplicate";
 
 /** Every sticker's row id in a deck – what may be arranged. */
 export const deckStickerIds = (deck: Pick<Deck, "slides">) =>
@@ -46,10 +47,26 @@ export const Decks: CollectionConfig = {
     preview: (doc) => address(doc?.slug),
     livePreview: { url: ({ data }) => address(data?.slug) ?? serverUrl() },
   },
-  hooks: { beforeValidate: [fillSlug] },
+  hooks: {
+    beforeValidate: [fillSlug],
+    // Duplicated (the admin's ⋯ → Duplicate): the stickers stay where they lie.
+    beforeChange: [noteDuplicate],
+    afterChange: [keepArrangement],
+  },
   endpoints: [arrangeEndpoint<Deck>("decks", deckStickerIds)],
   fields: [
-    { name: "title", type: "text", required: true },
+    {
+      name: "title",
+      type: "text",
+      required: true,
+      hooks: {
+        // Duplicated: told apart from the original at a glance.
+        beforeDuplicate: [
+          ({ value }) =>
+            typeof value === "string" ? `${value} (copy)` : value,
+        ],
+      },
+    },
     slugField(),
     // A QR code of the address, the link to copy, the code to download.
     {
@@ -102,6 +119,14 @@ export const Decks: CollectionConfig = {
         position: "sidebar",
         description:
           "The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.",
+      },
+    },
+    // Every slide as a little picture – click to open, drag to move.
+    {
+      name: "strip",
+      type: "ui",
+      admin: {
+        components: { Field: "@/features/decks/slide-strip#SlideStrip" },
       },
     },
     {

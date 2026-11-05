@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence, MotionGlobalConfig } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { useSnapshot } from "valtio";
 import { MotionProvider } from "@/components/motion";
@@ -25,6 +25,11 @@ type Props = {
   start: number;
   /** Logged in: the stickers may be arranged (E). */
   canArrange: boolean;
+  /**
+   * Just a picture of the slide (`?still` – the admin's preview strip):
+   * played through, nothing moving, no buttons, no 3D.
+   */
+  still?: boolean;
 };
 
 /** How long a press must last to show or hide the controls (ms). */
@@ -46,8 +51,15 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
  * loading anew – the browser's back goes a slide back. Its state and what
  * moves it: the player's store (store.ts), shared with its buttons and dock.
  */
-export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
-  const [player] = useState(() => createPlayer(deck, start));
+export const DeckPlayer = ({
+  deck,
+  start,
+  canArrange,
+  still = false,
+}: Props) => {
+  // A still: every animation at its end at once.
+  if (still) MotionGlobalConfig.skipAnimations = true;
+  const [player] = useState(() => createPlayer(deck, start, still));
   // Saved anew in the admin (the page refreshes): the new slides, same place.
   player.update(deck);
   const { pos, move, arranging } = useSnapshot(player.state);
@@ -167,7 +179,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   return (
     <PlayerContext.Provider value={player}>
       <MotionProvider>
-        <StickerStage>
+        <StickerStage off={still}>
           <main
             // In the flow, not fixed: Safari (iOS 26) tints its bars from a
             // fixed element at the screen's edge and keeps that color – the
@@ -194,10 +206,12 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                       move={move}
                     />
                     {/* The ways on and back stay on the stage, slide after slide. */}
-                    <SlideNav
-                      label={slide.nextLabel || deck.nextLabel}
-                      look={slide.look}
-                    />
+                    {!still && (
+                      <SlideNav
+                        label={slide.nextLabel || deck.nextLabel}
+                        look={slide.look}
+                      />
+                    )}
                   </>
                 }
               >
@@ -205,6 +219,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                   <SlideFrame
                     arrangement={arrangement}
                     arranging={arranging}
+                    frozen={still}
                     key={slide.id}
                     move={move}
                     onArrange={canArrange ? arrange : undefined}
@@ -217,12 +232,16 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                 <TransitionCover key={move.n} look={slide.look} move={move} />
               </Stage>
             </AroundStage>
-            <StickerCanvas />
-            <PrepareStickers
-              slides={[slides[pos.slide + 1], slides[pos.slide - 1]]}
-            />
+            {!still && (
+              <>
+                <StickerCanvas />
+                <PrepareStickers
+                  slides={[slides[pos.slide + 1], slides[pos.slide - 1]]}
+                />
+              </>
+            )}
           </main>
-          <Controls canArrange={canArrange} saveState={state} />
+          {!still && <Controls canArrange={canArrange} saveState={state} />}
         </StickerStage>
       </MotionProvider>
     </PlayerContext.Provider>

@@ -39,6 +39,11 @@ type Props = {
   onStep: () => void;
   /** It has arrived: its transition done, nothing over it. */
   onSettled?: () => void;
+  /**
+   * A still (the admin's preview strip): as if forever on its way – no 3D
+   * floaties, the stickers flat – light enough for many at once.
+   */
+  frozen?: boolean;
 };
 
 /** On a tall screen (a phone held upright) stickers are this much bigger. */
@@ -59,6 +64,7 @@ export const SlideFrame = ({
   onArrange,
   onStep,
   onSettled,
+  frozen = false,
 }: Props) => {
   const [own] = useState(move);
   const spec = specOf(own.kind);
@@ -125,7 +131,7 @@ export const SlideFrame = ({
     const timer = window.setTimeout(() => setUncovered(true), wait * 1000);
     return () => window.clearTimeout(timer);
   }, [spec.reveal, spec.cover, spec.turn]);
-  const still = present && landed && uncovered;
+  const still = present && landed && uncovered && !frozen;
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, when still
   useEffect(() => {
     if (still) onSettled?.();

@@ -31,11 +31,16 @@ export type PlayerState = {
 const SETTLE_AT_MOST = 1600;
 const CONTROLS_KEY = "ppp:controls";
 
-export const createPlayer = (initial: DeckData, start: number) => {
+export const createPlayer = (
+  initial: DeckData,
+  start: number,
+  /** Played through already (a still: every step taken). */
+  done = false
+) => {
   let deck = initial;
   let steps = deck.slides.map(stepsOf);
   const state = proxy<PlayerState>({
-    pos: { slide: start, step: 0 },
+    pos: { slide: start, step: done ? (steps[start] ?? 0) : 0 },
     move: { kind: "fade", dir: 1, n: 0 },
     settled: true,
     arranging: false,

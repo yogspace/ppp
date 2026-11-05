@@ -13,6 +13,7 @@ export const RESERVED = new Set([
   "fonts",
   "designs",
   "posters",
+  "og",
 ]);
 
 const UMLAUTS: Record<string, string> = {

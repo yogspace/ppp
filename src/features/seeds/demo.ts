@@ -403,6 +403,17 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
             stickers: stickers("star", "rainbow"),
           },
           {
+            blockType: "link",
+            heading: "One more thing",
+            url: "https://ppp.mxwr.de/for-you",
+            title: "A card, just for you",
+            note: "Opens in a new tab. Or scan it from the big screen.",
+            label: "Open it",
+            theme: look.bubblegum,
+            transition: "boing",
+            stickers: stickers("rainbow"),
+          },
+          {
             blockType: "card",
             to: "you",
             headline: "Thank\nyou!",

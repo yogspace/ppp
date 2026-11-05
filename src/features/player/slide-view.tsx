@@ -2,6 +2,7 @@
 
 import { m } from "motion/react";
 import { type CSSProperties, useContext, useEffect, useState } from "react";
+import { LinkSlide } from "@/features/link/link-slide";
 import type { Picture } from "@/features/media/picture";
 import { unmarked } from "@/features/scratch/parse";
 import { ScratchText } from "@/features/scratch/scratch";
@@ -997,6 +998,8 @@ export const SlideView = ({
       return <Quote slide={slide} />;
     case "scratch":
       return <ScratchSlide onForward={onForward} slide={slide} step={step} />;
+    case "link":
+      return <LinkSlide slide={slide} />;
     default:
       return null;
   }

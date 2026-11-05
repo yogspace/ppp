@@ -43,12 +43,20 @@ export const useStickerStage = () => useContext(StageContext);
  * controls; clicks go through it. Without WebGL the stickers stay flat
  * pictures with a white edge (sticker.tsx) – nothing else changes.
  */
-export const StickerStage = ({ children }: { children: ReactNode }) => {
+export const StickerStage = ({
+  children,
+  off = false,
+}: {
+  children: ReactNode;
+  /** No 3D at all (a still): the stickers stay flat. */
+  off?: boolean;
+}) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<StickerRenderer | null>(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    if (off) return;
     let on = true;
     // three.js only where it is needed – loaded after the page.
     import("./renderer")
@@ -64,7 +72,7 @@ export const StickerStage = ({ children }: { children: ReactNode }) => {
       rendererRef.current?.dispose();
       rendererRef.current = null;
     };
-  }, []);
+  }, [off]);
 
   const stage = useMemo<Stage>(
     () => ({

@@ -27,3 +27,4 @@ next-env.d.ts
 # Fonts (ITF Free Font License): fetched by scripts/prepare.mjs, must not
 # be redistributed – so not in the (public) repo.
 public/fonts/
+/og-fonts/

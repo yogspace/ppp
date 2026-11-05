@@ -6,12 +6,23 @@
 // no redistribution, so the files are not in git (public/fonts/ is ignored)
 // but fetched here. If a download fails, the build goes on: that font's
 // themes then use the system font.
+//
+// Also a static bold cut of each into og-fonts/ (not public, also ignored):
+// the share previews are drawn with them – their renderer reads no woff2.
 import { access, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { unzipSync } from "fflate";
 
 const target = fileURLToPath(new URL("../public/fonts/", import.meta.url));
+const ogTarget = fileURLToPath(new URL("../og-fonts/", import.meta.url));
+
+/** The share previews' cuts: Fontshare's slug → its static file. */
+const OG_FONTS = {
+  switzer: "Switzer-Bold.otf",
+  pally: "Pally-Bold.otf",
+  gambarino: "Gambarino-Regular.otf",
+};
 
 /** Fontshare's slug → the files to keep from its archive. */
 const FONTS = {
@@ -30,13 +41,16 @@ const exists = async (path) => {
 };
 
 await mkdir(target, { recursive: true });
+await mkdir(ogTarget, { recursive: true });
 
 for (const [slug, names] of Object.entries(FONTS)) {
   const missing = [];
   for (const name of names) {
     if (!(await exists(join(target, name)))) missing.push(name);
   }
-  if (missing.length === 0) continue;
+  const og = OG_FONTS[slug];
+  const ogMissing = og && !(await exists(join(ogTarget, og)));
+  if (missing.length === 0 && !ogMissing) continue;
   try {
     const response = await fetch(
       `https://api.fontshare.com/v2/fonts/download/${slug}`
@@ -51,6 +65,7 @@ for (const [slug, names] of Object.entries(FONTS)) {
     for (const name of missing) {
       await writeFile(join(target, name), pick(`WEB/fonts/${name}`));
     }
+    if (ogMissing) await writeFile(join(ogTarget, og), pick(`OTF/${og}`));
     await writeFile(
       join(target, `${slug}-license.txt`),
       pick("License/FFL.txt")

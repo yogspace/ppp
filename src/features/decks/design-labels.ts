@@ -13,6 +13,7 @@ export const DESIGN_LABELS = {
   gallery: { label: "Gallery", group: "Pictures" },
   card: { label: "Card", group: "Other" },
   scratch: { label: "Scratch ticket", group: "Other" },
+  link: { label: "Link", group: "Other" },
   blank: { label: "Just stickers", group: "Other" },
 } as const;
 

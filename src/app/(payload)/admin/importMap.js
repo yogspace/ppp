@@ -1,5 +1,6 @@
 import { SlugField as SlugField_b6cc382af4e94a75508356e83d000921 } from '@/features/slug/slug-field'
 import { ShareField as ShareField_4d4553bec1e57bd552eb69f575279069 } from '@/features/decks/share-field'
+import { SlideStrip as SlideStrip_9aa141d80e593cfc79b9dcdc7b316771 } from '@/features/decks/slide-strip'
 import { StickerRowLabel as StickerRowLabel_8efde3592ecbdf7c415119f33f83df04 } from '@/features/stickers/row-label'
 import { SlideLabel as SlideLabel_d542f14857a38742ba215cea28d49a26 } from '@/features/decks/slide-label'
 import { RscEntryLexicalCell as RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e } from '@payloadcms/richtext-lexical/rsc'
@@ -25,6 +26,7 @@ import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } f
 export const importMap = {
   "@/features/slug/slug-field#SlugField": SlugField_b6cc382af4e94a75508356e83d000921,
   "@/features/decks/share-field#ShareField": ShareField_4d4553bec1e57bd552eb69f575279069,
+  "@/features/decks/slide-strip#SlideStrip": SlideStrip_9aa141d80e593cfc79b9dcdc7b316771,
   "@/features/stickers/row-label#StickerRowLabel": StickerRowLabel_8efde3592ecbdf7c415119f33f83df04,
   "@/features/decks/slide-label#SlideLabel": SlideLabel_d542f14857a38742ba215cea28d49a26,
   "@payloadcms/richtext-lexical/rsc#RscEntryLexicalCell": RscEntryLexicalCell_44fe37237e0ebf4470c9990d8cb7b07e,

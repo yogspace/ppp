@@ -389,5 +389,58 @@ export const DESIGNS: Block[] = [
       },
     ]
   ),
+  design(
+    "link",
+    "A link to open: a card with its button – and, on a big screen, its QR code.",
+    [
+      {
+        name: "heading",
+        type: "text",
+        admin: { description: "Above the card – optional." },
+      },
+      {
+        name: "url",
+        type: "text",
+        required: true,
+        label: "Address",
+        admin: { placeholder: "https://…" },
+        validate: (value: unknown) => {
+          if (typeof value !== "string" || !value) return "Needs an address.";
+          try {
+            const { protocol } = new URL(value);
+            return protocol === "http:" || protocol === "https:"
+              ? true
+              : "An address starting with https:// (or http://).";
+          } catch {
+            return "An address starting with https:// (or http://).";
+          }
+        },
+      },
+      {
+        name: "title",
+        type: "text",
+        required: true,
+        admin: { description: "Big on the card – what's behind the link." },
+      },
+      {
+        name: "note",
+        type: "text",
+        admin: { description: "Small, under the title." },
+      },
+      {
+        name: "label",
+        type: "text",
+        label: "Button",
+        admin: { placeholder: "Open" },
+      },
+      {
+        name: "image",
+        type: "upload",
+        relationTo: "media",
+        filterOptions: { mimeType: { contains: "image" } },
+        admin: { description: "Optional – on top of the card." },
+      },
+    ]
+  ),
   design("blank", "Nothing but the theme and stickers.", []),
 ];
