@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Wordmark } from "@/components/wordmark";
 import { lookOf } from "@/features/themes/look";
 import { lookVars } from "@/features/themes/theme";
@@ -18,19 +19,14 @@ type Tile = {
 const TILTS = [-2.5, 1.8, -1.2, 2.6, -1.8, 1.2];
 
 /**
- * The front page. For everyone: just the word mark. Logged in: everything
- * I made – decks and cards (a deck of one Card slide), each in its theme –
- * and the way to make more.
+ * The front page – mine only: everything I made, decks and cards (a deck of
+ * one Card slide), each in its theme, and the way to make more. Not logged
+ * in: to the admin's login, and back here after it. The decks themselves
+ * stay open to anyone with their address.
  */
 const Home = async () => {
   const user = await viewer();
-  if (!user) {
-    return (
-      <main className="grid min-h-dvh place-items-center bg-[#efeff5] text-[#0b1533]">
-        <Wordmark className="font-sans text-[34vmin] leading-none font-bold tracking-tight" />
-      </main>
-    );
-  }
+  if (!user) redirect("/admin/login?redirect=%2F");
   const local = await payload();
   const decks = await local.find({
     collection: "decks",
