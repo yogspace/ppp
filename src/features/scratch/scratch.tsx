@@ -14,8 +14,11 @@ import {
 import { cn } from "@/lib/cn";
 import { scratchParts } from "./parse";
 
-/** Scratched this much (a share of the foil), the rest falls away. */
-const ENOUGH = 0.5;
+/**
+ * Scratched this much (a share of the foil), the rest falls away: a few
+ * words soon, a ticket (the scratch slide) only when nearly all is gone.
+ */
+const ENOUGH = { words: 0.5, ticket: 0.8 };
 /** Rubbed free by itself (the next button): this long (ms). */
 const AUTO = 750;
 
@@ -162,6 +165,7 @@ export const Scratch = ({
   const canvas = useRef<HTMLCanvasElement>(null);
   const [rubbed, setRubbed] = useState(false);
   const open = asked ?? rubbed;
+  const enough = block ? ENOUGH.ticket : ENOUGH.words;
   const last = useRef<{ x: number; y: number } | null>(null);
   const strokes = useRef(0);
   const [flakes, setFlakes] = useState<Flake[]>([]);
@@ -218,7 +222,7 @@ export const Scratch = ({
     ctx.lineJoin = "round";
     // A fingertip: about the words' height – on a ticket, a fat thumb.
     ctx.lineWidth = block
-      ? Math.max(28, c.height * 0.22)
+      ? Math.max(28, c.height * 0.16)
       : Math.max(14, c.height * 0.7);
     const from = last.current ?? { x: px, y: py };
     ctx.beginPath();
@@ -257,7 +261,7 @@ export const Scratch = ({
     const own = el.getBoundingClientRect();
     shed(x - own.left, y - own.top);
     strokes.current++;
-    if (strokes.current % 6 === 0 && cleared(c) >= ENOUGH) reveal();
+    if (strokes.current % 6 === 0 && cleared(c) >= enough) reveal();
   };
 
   // Opened from outside while still covered: it rubs itself free first.
@@ -265,7 +269,7 @@ export const Scratch = ({
   // biome-ignore lint/correctness/useExhaustiveDependencies: on `asked` alone
   useEffect(() => {
     const c = canvas.current;
-    if (!(asked && c?.width) || rubbed || cleared(c) >= ENOUGH) return;
+    if (!(asked && c?.width) || rubbed || cleared(c) >= enough) return;
     setSelfRubbing(true);
     const start = performance.now();
     last.current = null;
@@ -348,7 +352,7 @@ export const Scratch = ({
         }}
         onPointerUp={() => {
           last.current = null;
-          if (!open && cleared(canvas.current) >= ENOUGH) reveal();
+          if (!open && cleared(canvas.current) >= enough) reveal();
         }}
         ref={canvas}
         transition={{ duration: 0.55, ease: "easeIn" }}
