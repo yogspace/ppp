@@ -87,11 +87,6 @@ export type DeckData = {
   transition: TransitionChoice;
   /** The controls at the bottom – off: the slides' own buttons only. */
   dock: boolean;
-  /**
-   * The next button takes every step too (a point, a picture, the card),
-   * there from the start – off: it comes once the slide is played through.
-   */
-  stepButton: boolean;
   /** Every slide's next button's words – empty: just an arrow. */
   nextLabel: string;
   slides: SlideData[];

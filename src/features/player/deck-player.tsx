@@ -87,8 +87,6 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const steps = useMemo(() => slides.map(stepsOf), [slides]);
   const [pos, setPos] = useState<Pos>({ slide: start, step: 0 });
   const posRef = useRef(pos);
-  // How far the deck got: every slide before it was seen already.
-  const [furthest, setFurthest] = useState(start);
   const [move, setMove] = useState<Move>({ kind: "fade", dir: 1, n: 0 });
   const [arranging, setArranging] = useState(false);
   const [controls, setControls] = useControlsShown();
@@ -134,7 +132,6 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       }
       posRef.current = next;
       setPos(next);
-      setFurthest((f) => Math.max(f, next.slide));
     },
     [slides, deck.transition, deck.slug]
   );
@@ -281,11 +278,9 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const slide = slides[pos.slide];
   useDocumentColor(slide?.look.bg ?? "#efeff5");
   if (!slide) return null;
-  // The way on shows once the slide is played through – points shown, stack
-  // thrown, Card opened –, at once on a slide seen before, or from the start
-  // when it takes the steps too (the deck's choice).
+  // The slide's steps (points, pictures, the card): the next button takes
+  // them one by one, a ring filling up, then on to the next slide.
   const total = steps[pos.slide] ?? 0;
-  const ready = deck.stepButton || pos.slide < furthest || pos.step >= total;
   // Where the slide's own button leads.
   const onward: Onward =
     pos.step < total
@@ -335,7 +330,6 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
                     onOn={onward === "again" ? () => to(0) : next}
                     onward={onward}
                     progress={total ? pos.step / total : 1}
-                    ready={ready}
                     // Mid-transition, the ways to another slide wait (a click is kept):
                     // pressed in a little until the slide has arrived.
                     waitBack={!settled && pos.step === 0}

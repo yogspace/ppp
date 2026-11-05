@@ -70,12 +70,6 @@ type Props = {
    */
   label: string;
   back: boolean;
-  /**
-   * The slide was played through – its points shown, its stack thrown, its
-   * Card opened: the way on may come (and stays). The way back is always
-   * there, past the first slide.
-   */
-  ready: boolean;
   /** How far through its steps the slide is, 0 to 1 – shown while it has some left. */
   progress: number;
   /** The way on, the way back lead to another slide that can't come yet. */
@@ -99,7 +93,6 @@ export const SlideNav = ({
   onward,
   label,
   back,
-  ready,
   progress,
   waitOn = false,
   waitBack = false,
@@ -158,7 +151,7 @@ export const SlideNav = ({
         style={waitStyle(waitOn)}
       >
         <AnimatePresence mode="popLayout">
-          {onward && ready && (
+          {onward && (
             <m.button
               animate={{ scale: 1, rotate: -3, opacity: 1 }}
               aria-label={words ? undefined : NAMES[onward]}
