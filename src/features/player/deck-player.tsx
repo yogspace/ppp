@@ -1,30 +1,22 @@
 "use client";
 
 import { AnimatePresence } from "motion/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSnapshot } from "valtio";
 import { MotionProvider } from "@/components/motion";
 import { AroundStage } from "@/features/backdrop/slide-background";
 import { picturesIn, preload } from "@/features/media/preload";
 import { PrepareStickers } from "@/features/stickers/prepare";
 import { StickerCanvas, StickerStage } from "@/features/stickers/sticker-stage";
 import { useArrange } from "@/features/stickers/use-arrange";
-import type { Move } from "@/features/transitions/frames";
-import { resolveTransition } from "@/features/transitions/kinds";
 import { TransitionCover } from "@/features/transitions/overlay";
 import { Controls } from "./controls";
 import { useDocumentColor } from "./document-color";
 import { SlideFrame } from "./slide-frame";
-import { type Onward, SlideNav } from "./slide-nav";
+import { SlideNav } from "./slide-nav";
 import { Stage } from "./stage";
-import {
-  backward,
-  forward,
-  jump,
-  type Pos,
-  slideFromPath,
-  slideHref,
-  stepsOf,
-} from "./steps";
+import { slideFromPath } from "./steps";
+import { createPlayer, PlayerContext } from "./store";
 import type { DeckData } from "./types";
 
 type Props = {
@@ -37,35 +29,6 @@ type Props = {
 
 /** How long a press must last to show or hide the controls (ms). */
 const LONG_PRESS = 550;
-
-const CONTROLS_KEY = "ppp:controls";
-
-/**
- * The controls shown or not – off at first, then as this device last had
- * them (a convenience: without storage it is just off).
- */
-const useControlsShown = () => {
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    try {
-      setShown(window.localStorage.getItem(CONTROLS_KEY) === "1");
-    } catch {
-      // No storage – off.
-    }
-  }, []);
-  const set = useCallback((next: boolean | ((shown: boolean) => boolean)) => {
-    setShown((current) => {
-      const value = typeof next === "function" ? next(current) : next;
-      try {
-        window.localStorage.setItem(CONTROLS_KEY, value ? "1" : "0");
-      } catch {
-        // No storage – it just isn't remembered.
-      }
-      return value;
-    });
-  }, []);
-  return [shown, set] as const;
-};
 
 /** Keys that go on, and back. */
 const ON = new Set(["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"]);
@@ -80,114 +43,36 @@ const BACK = new Set(["ArrowLeft", "ArrowUp", "PageUp", "Backspace"]);
  * press, or the mouse at the bottom edge) shows the controls, E arranges the
  * stickers (logged in). Every slide
  * has its address (`/talk`, `/talk/1` …): written as it changes, without
- * loading anew – the browser's back goes a slide back.
+ * loading anew – the browser's back goes a slide back. Its state and what
+ * moves it: the player's store (store.ts), shared with its buttons and dock.
  */
 export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
+  const [player] = useState(() => createPlayer(deck, start));
+  // Saved anew in the admin (the page refreshes): the new slides, same place.
+  player.update(deck);
+  const { pos, move, arranging } = useSnapshot(player.state);
   const { slides } = deck;
-  const steps = useMemo(() => slides.map(stepsOf), [slides]);
-  const [pos, setPos] = useState<Pos>({ slide: start, step: 0 });
-  const posRef = useRef(pos);
-  const [move, setMove] = useState<Move>({ kind: "fade", dir: 1, n: 0 });
-  const [arranging, setArranging] = useState(false);
-  const [controls, setControls] = useControlsShown();
   const { arrangement, arrange, state } = useArrange(
     "decks",
     deck.id,
     deck.arrangement
   );
 
-  // On to another slide only once this one has arrived (its transition
-  // done – SlideFrame says so): clicks meanwhile wait, the last one goes then.
-  // Steps within a slide never wait.
-  const settledRef = useRef(true);
-  const [settled, setSettled] = useState(true);
-  const pending = useRef<(() => Pos) | null>(null);
-  const settleTimer = useRef(0);
-
-  const goTo = useCallback(
-    (next: Pos, { history = "push" }: { history?: "push" | "none" } = {}) => {
-      const current = posRef.current;
-      if (next.slide === current.slide && next.step === current.step) return;
-      if (next.slide !== current.slide) {
-        settledRef.current = false;
-        setSettled(false);
-        // Never stuck: at most this long.
-        window.clearTimeout(settleTimer.current);
-        settleTimer.current = window.setTimeout(
-          () => settleRef.current(),
-          1600
-        );
-        setMove((m) => ({
-          kind: resolveTransition(
-            slides[next.slide]?.transition,
-            deck.transition,
-            Math.random()
-          ),
-          dir: next.slide > current.slide ? 1 : -1,
-          n: m.n + 1,
-        }));
-        if (history === "push") {
-          window.history.pushState(null, "", slideHref(deck.slug, next.slide));
-        }
-      }
-      posRef.current = next;
-      setPos(next);
-    },
-    [slides, deck.transition, deck.slug]
-  );
-
-  /** A move asked for: now, or – to another slide, mid-transition – later. */
-  const ask = useCallback(
-    (target: () => Pos) => {
-      if (target().slide !== posRef.current.slide && !settledRef.current) {
-        pending.current = target;
-        return;
-      }
-      goTo(target());
-    },
-    [goTo]
-  );
-
-  /** The slide has arrived: a click that waited goes now. */
-  const settle = useCallback(() => {
-    window.clearTimeout(settleTimer.current);
-    if (settledRef.current) return;
-    settledRef.current = true;
-    setSettled(true);
-    const waiting = pending.current;
-    pending.current = null;
-    if (waiting) goTo(waiting());
-  }, [goTo]);
-  // `settle` is used by goTo before it is made: kept in a ref for it.
-  const settleRef = useRef(settle);
-  settleRef.current = settle;
-
-  const next = useCallback(
-    () => ask(() => forward(steps, posRef.current)),
-    [ask, steps]
-  );
-  const prev = useCallback(
-    () => ask(() => backward(steps, posRef.current)),
-    [ask, steps]
-  );
-  const to = useCallback(
-    (slide: number) => ask(() => jump(steps, slide)),
-    [ask, steps]
-  );
+  useEffect(() => player.remember(), [player]);
 
   // The browser's back and forward: to the slide its address names.
   useEffect(() => {
     const pop = () => {
       const slide = slideFromPath(
         window.location.pathname,
-        deck.slug,
-        slides.length
+        player.deck.slug,
+        player.deck.slides.length
       );
-      if (slide !== null) goTo(jump(steps, slide), { history: "none" });
+      if (slide !== null) player.jumpTo(slide);
     };
     window.addEventListener("popstate", pop);
     return () => window.removeEventListener("popstate", pop);
-  }, [deck.slug, slides.length, goTo, steps]);
+  }, [player]);
 
   // This slide's pictures (a List's change with each point) and the next
   // slide's, loaded ahead: there the moment they show.
@@ -212,29 +97,29 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       }
       if (ON.has(event.key)) {
         event.preventDefault();
-        next();
+        player.next();
       } else if (BACK.has(event.key)) {
         event.preventDefault();
-        prev();
+        player.prev();
       } else if (event.key === "Home") {
-        to(0);
+        player.to(0);
       } else if (event.key === "End") {
-        to(slides.length - 1);
+        player.to(player.deck.slides.length - 1);
       } else if (event.key === "f" || event.key === "F") {
         if (document.fullscreenElement) document.exitFullscreen();
         else
           document.documentElement.requestFullscreen?.().catch(() => undefined);
       } else if ((event.key === "e" || event.key === "E") && canArrange) {
-        setArranging((a) => !a);
+        player.toggleArranging();
       } else if (event.key === "h" || event.key === "H") {
-        setControls((shown) => !shown);
+        player.toggleControls();
       } else if (event.key === "Escape") {
-        setArranging(false);
+        player.stopArranging();
       }
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [next, prev, to, slides.length, canArrange, setControls]);
+  }, [player, canArrange]);
 
   // A tap, a click or a swipe on the slide go nowhere – the slide's own
   // buttons and the keys do. A long press (no keyboard on a phone) shows or
@@ -257,7 +142,7 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
       held: false,
       timer: window.setTimeout(() => {
         start.held = true;
-        setControls((shown) => !shown);
+        player.toggleControls();
       }, LONG_PRESS),
     };
     down.current = start;
@@ -278,98 +163,68 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
   const slide = slides[pos.slide];
   useDocumentColor(slide?.look.bg ?? "#efeff5");
   if (!slide) return null;
-  // The slide's steps (points, pictures, the card): the next button takes
-  // them one by one, a ring filling up, then on to the next slide.
-  const total = steps[pos.slide] ?? 0;
-  // Where the slide's own button leads.
-  const onward: Onward =
-    pos.step < total
-      ? "point"
-      : pos.slide < slides.length - 1
-        ? "next"
-        : slides.length > 1
-          ? "again"
-          : null;
 
   return (
-    <MotionProvider>
-      <StickerStage>
-        <main
-          // In the flow, not fixed: Safari (iOS 26) tints its bars from a
-          // fixed element at the screen's edge and keeps that color – the
-          // page's own color (document-color.ts) must decide.
-          className="relative grid h-dvh w-full touch-none place-items-center overflow-hidden"
-          onContextMenu={(event) => event.preventDefault()}
-          onPointerCancel={() => {
-            if (down.current) window.clearTimeout(down.current.timer);
-            down.current = null;
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-        >
-          <h1 className="sr-only">{deck.title}</h1>
-          <AroundStage>
-            <Stage
-              above={
-                <>
-                  <TransitionCover
-                    key={move.n}
-                    layer="above"
-                    look={slide.look}
+    <PlayerContext.Provider value={player}>
+      <MotionProvider>
+        <StickerStage>
+          <main
+            // In the flow, not fixed: Safari (iOS 26) tints its bars from a
+            // fixed element at the screen's edge and keeps that color – the
+            // page's own color (document-color.ts) must decide.
+            className="relative grid h-dvh w-full touch-none place-items-center overflow-hidden"
+            onContextMenu={(event) => event.preventDefault()}
+            onPointerCancel={() => {
+              if (down.current) window.clearTimeout(down.current.timer);
+              down.current = null;
+            }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+          >
+            <h1 className="sr-only">{deck.title}</h1>
+            <AroundStage>
+              <Stage
+                above={
+                  <>
+                    <TransitionCover
+                      key={move.n}
+                      layer="above"
+                      look={slide.look}
+                      move={move}
+                    />
+                    {/* The ways on and back stay on the stage, slide after slide. */}
+                    <SlideNav
+                      label={slide.nextLabel || deck.nextLabel}
+                      look={slide.look}
+                    />
+                  </>
+                }
+              >
+                <AnimatePresence custom={move}>
+                  <SlideFrame
+                    arrangement={arrangement}
+                    arranging={arranging}
+                    key={slide.id}
                     move={move}
+                    onArrange={canArrange ? arrange : undefined}
+                    onSettled={player.settle}
+                    onStep={player.next}
+                    slide={slide}
+                    step={pos.step}
                   />
-                  {/* The ways on and back stay on the stage, slide after slide. */}
-                  <SlideNav
-                    back={pos.slide > 0 || pos.step > 0}
-                    delay={move.n === 0 ? 1.2 : 0.3}
-                    label={slide.nextLabel || deck.nextLabel}
-                    look={slide.look}
-                    onBack={prev}
-                    onOn={onward === "again" ? () => to(0) : next}
-                    onward={onward}
-                    progress={total ? pos.step / total : 1}
-                    // Mid-transition, the ways to another slide wait (a click is kept):
-                    // pressed in a little until the slide has arrived.
-                    waitBack={!settled && pos.step === 0}
-                    waitOn={!settled && onward !== "point"}
-                  />
-                </>
-              }
-            >
-              <AnimatePresence custom={move}>
-                <SlideFrame
-                  arrangement={arrangement}
-                  arranging={arranging}
-                  key={slide.id}
-                  move={move}
-                  onArrange={canArrange ? arrange : undefined}
-                  onSettled={settle}
-                  onStep={next}
-                  slide={slide}
-                  step={pos.step}
-                />
-              </AnimatePresence>
-              <TransitionCover key={move.n} look={slide.look} move={move} />
-            </Stage>
-          </AroundStage>
-          <StickerCanvas />
-          <PrepareStickers
-            slides={[slides[pos.slide + 1], slides[pos.slide - 1]]}
-          />
-        </main>
-        <Controls
-          arranging={arranging}
-          canArrange={canArrange}
-          count={slides.length}
-          dock={deck.dock}
-          onArrange={() => setArranging((a) => !a)}
-          onJump={to}
-          saveState={state}
-          shown={controls}
-          slide={pos.slide}
-        />
-      </StickerStage>
-    </MotionProvider>
+                </AnimatePresence>
+                <TransitionCover key={move.n} look={slide.look} move={move} />
+              </Stage>
+            </AroundStage>
+            <StickerCanvas />
+            <PrepareStickers
+              slides={[slides[pos.slide + 1], slides[pos.slide - 1]]}
+            />
+          </main>
+          <Controls canArrange={canArrange} saveState={state} />
+        </StickerStage>
+      </MotionProvider>
+    </PlayerContext.Provider>
   );
 };

@@ -26,6 +26,7 @@
     "@payloadcms/next": "3.90.2",
     "@payloadcms/richtext-lexical": "3.90.2",
     "@payloadcms/ui": "3.90.2",
+    "clsx": "2.1.1",
     "cross-env": "^7.0.3",
     "d3-contour": "^4.0.2",
     "graphql": "^16.14.2",
@@ -38,7 +39,8 @@
     "react-dom": "^19.3.1",
     "sharp": "0.35.5",
     "tailwind-merge": "^3.7.0",
-    "three": "^0.186.1"
+    "three": "^0.186.1",
+    "valtio": "^2.3.2"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

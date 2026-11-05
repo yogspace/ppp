@@ -4,6 +4,7 @@ import { AnimatePresence, m } from "motion/react";
 import { type RefObject, useEffect, useRef, useState } from "react";
 import type { SaveState } from "@/features/stickers/use-arrange";
 import { cn } from "@/lib/cn";
+import { usePlayer, usePlayerState } from "./store";
 
 const SPRING = { type: "spring", stiffness: 500, damping: 30 } as const;
 
@@ -71,16 +72,7 @@ const useDock = (ref: RefObject<HTMLElement | null>) => {
 };
 
 type Props = {
-  /** The deck has a dock at all – else only the arranging band. */
-  dock: boolean;
-  /** Pinned (H, or a long press) – else they come up like a dock. */
-  shown: boolean;
-  count: number;
-  slide: number;
-  onJump: (slide: number) => void;
   canArrange: boolean;
-  arranging: boolean;
-  onArrange: () => void;
   saveState: SaveState;
 };
 
@@ -91,17 +83,13 @@ type Props = {
  * mouse at the bottom edge, H, or a long press: the slides alone on the
  * screen.
  */
-export const Controls = ({
-  dock,
-  shown: asked,
-  count,
-  slide,
-  onJump,
-  canArrange,
-  arranging,
-  onArrange,
-  saveState,
-}: Props) => {
+export const Controls = ({ canArrange, saveState }: Props) => {
+  const player = usePlayer();
+  // Pinned up (H, a long press) – else they come up like a dock.
+  const { pos, arranging, controls: asked } = usePlayerState();
+  const { dock } = player.deck;
+  const count = player.deck.slides.length;
+  const slide = pos.slide;
   const [fullscreen, setFullscreen] = useState(false);
   const [canFullscreen, setCanFullscreen] = useState(false);
   useEffect(() => {
@@ -175,7 +163,7 @@ export const Controls = ({
           aria-label="Slides"
           className={cn(
             "fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-neutral-950/80 p-1 text-white shadow-[0_0.5rem_1.5rem_-0.5rem_rgb(0_0_0/0.5)] backdrop-blur",
-            !shown && "pointer-events-none"
+            { "pointer-events-none": !shown }
           )}
           data-controls
           initial={false}
@@ -190,7 +178,7 @@ export const Controls = ({
                   aria-label={`Slide ${i + 1}`}
                   className="relative grid h-11 w-3 place-items-center"
                   key={i}
-                  onClick={() => onJump(i)}
+                  onClick={() => player.to(i)}
                   type="button"
                 >
                   {i === slide ? (
@@ -234,11 +222,10 @@ export const Controls = ({
             <button
               aria-label="Arrange stickers"
               aria-pressed={arranging}
-              className={cn(
-                button,
-                arranging && "bg-white text-neutral-950 hover:bg-white"
-              )}
-              onClick={onArrange}
+              className={cn(button, {
+                "bg-white text-neutral-950 hover:bg-white": arranging,
+              })}
+              onClick={player.toggleArranging}
               type="button"
             >
               <Icon d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z" />

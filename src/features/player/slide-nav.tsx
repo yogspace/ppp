@@ -4,6 +4,7 @@ import { AnimatePresence, m, useIsPresent } from "motion/react";
 import type { ThemeLook } from "@/features/themes/theme";
 import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
+import { useOnward, usePlayer, usePlayerState } from "./store";
 
 /**
  * Where the slide's button leads: on to the next slide, to the next point
@@ -36,11 +37,9 @@ const ICON_SPRING = { type: "spring", stiffness: 500, damping: 18 } as const;
 const Icon = ({ onward }: { onward: Exclude<Onward, null> }) => (
   <svg
     aria-hidden
-    className={cn(
-      "size-[1.1em]",
-      onward === "next" &&
-        "animate-[nudge-right_3.4s_ease-in-out_2.5s_infinite]"
-    )}
+    className={cn("size-[1.1em]", {
+      "animate-[nudge-right_3.4s_ease-in-out_2.5s_infinite]": onward === "next",
+    })}
     fill="none"
     stroke="currentColor"
     strokeLinecap="round"
@@ -62,44 +61,35 @@ const Icon = ({ onward }: { onward: Exclude<Onward, null> }) => (
 
 type Props = {
   look: ThemeLook;
-  onward: Onward;
   /**
    * Words on the button on to the next slide (the deck's, or the slide's
    * own) – empty: just an arrow. Steps and the way back to the start are
    * arrows always.
    */
   label: string;
-  back: boolean;
-  /** How far through its steps the slide is, 0 to 1 – shown while it has some left. */
-  progress: number;
-  /** The way on, the way back lead to another slide that can't come yet. */
-  waitOn?: boolean;
-  waitBack?: boolean;
-  /** Seconds after the slide arrived. */
-  delay: number;
-  onOn: () => void;
-  onBack: () => void;
 };
 
 /**
- * A slide's own way on and back – part of the slide, in its theme, flying in
- * and out with it: a sticker-like button in the accent, bobbing a little –
- * an arrow (with the deck's or slide's words, if it has some), ↺ at the
- * end – and a small round ←. A deck never moves on by itself; this or the
- * keys do.
+ * A slide's own way on and back, in its theme – a sticker-like button in
+ * the accent, bobbing a little: › a step (a ring filling up), → on (with the
+ * deck's or slide's words, if it has some), ↺ at the end – and a small
+ * round ←. Bigger on the first slide. A deck never moves on by itself; this
+ * or the keys do. Where it is and what it does: the player (store.ts).
  */
-export const SlideNav = ({
-  look,
-  onward,
-  label,
-  back,
-  progress,
-  waitOn = false,
-  waitBack = false,
-  delay,
-  onOn,
-  onBack,
-}: Props) => {
+export const SlideNav = ({ look, label }: Props) => {
+  const player = usePlayer();
+  const { pos, move, settled } = usePlayerState();
+  const { onward, progress } = useOnward();
+  const back = pos.slide > 0 || pos.step > 0;
+  const first = pos.slide === 0;
+  // Mid-transition the ways to another slide wait (a click is kept):
+  // pressed in a little until the slide has arrived.
+  const waitBack = !settled && pos.step === 0;
+  const waitOn = !settled && onward !== "point";
+  // Seconds after the slide arrived: the very first one takes its time.
+  const delay = move.n === 0 ? 1.2 : 0.3;
+  const onBack = player.prev;
+  const onOn = onward === "again" ? () => player.to(0) : player.next;
   // A leaving slide's buttons go along, but no longer work.
   const present = useIsPresent();
   const ink = isDark(look.accent) ? "#ffffff" : "#111111";
@@ -116,7 +106,7 @@ export const SlideNav = ({
             <m.button
               animate={{ scale: 1, opacity: 1 }}
               aria-label="Back"
-              className="pointer-events-auto grid size-[max(44px,6cqmin)] place-items-center rounded-full backdrop-blur-sm"
+              className="pointer-events-auto grid size-[max(44px,6cqmin)] cursor-pointer place-items-center rounded-full backdrop-blur-sm"
               disabled={!present}
               exit={{ scale: 0, opacity: 0 }}
               initial={{ scale: 0, opacity: 0 }}
@@ -128,7 +118,7 @@ export const SlideNav = ({
               transition={{ ...SPRING, delay: delay + 0.4 }}
               type="button"
               whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.85 }}
+              whileTap={{ scale: 0.9 }}
             >
               <svg
                 aria-hidden
@@ -156,10 +146,14 @@ export const SlideNav = ({
               animate={{ scale: 1, rotate: -3, opacity: 1 }}
               aria-label={words ? undefined : NAMES[onward]}
               className={cn(
-                "copy pointer-events-auto relative inline-flex items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",
-                words
-                  ? "px-[max(18px,2.6cqmin)] py-[max(9px,1.3cqmin)]"
-                  : "size-[max(48px,6.6cqmin)]"
+                "copy pointer-events-auto relative inline-flex cursor-pointer items-center justify-center gap-[0.45em] rounded-full border-[max(3px,0.45cqmin)] border-white text-[max(16px,2.4cqmin)] leading-none font-semibold shadow-[0_0.8cqmin_1.6cqmin_-0.4cqmin_rgb(0_0_0/0.35)]",
+                {
+                  // The first slide: bigger, there's nothing else to do yet.
+                  "text-[max(22px,3.6cqmin)]": first,
+                  "px-[max(18px,2.6cqmin)] py-[max(9px,1.3cqmin)]": words,
+                  "size-[max(48px,6.6cqmin)]": !words && !first,
+                  "size-[max(68px,10cqmin)]": !words && first,
+                }
               )}
               disabled={!present}
               exit={{ scale: 0, rotate: 12, opacity: 0 }}
@@ -175,7 +169,7 @@ export const SlideNav = ({
                 layout: { type: "spring", stiffness: 420, damping: 32 },
               }}
               type="button"
-              whileHover={{ scale: 1.07, rotate: 0 }}
+              whileHover={{ scale: 1.1, rotate: 0 }}
               whileTap={{ scale: 0.9 }}
             >
               <AnimatePresence initial={false} mode="popLayout">
