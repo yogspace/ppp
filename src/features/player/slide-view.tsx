@@ -570,8 +570,12 @@ const Framed = ({ image, caption }: { image: Picture; caption: string }) => {
           picture={image}
           style={box}
         />
-        {/* Never edge to edge: broken into even lines, in the middle. */}
-        <figcaption className="copy min-h-[2.133cqmin] px-[4cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] leading-[1.2] text-balance text-neutral-800">
+        {/* As wide as the photo, never wider (the frame follows the photo):
+            broken into even lines, in the middle, off the edges. */}
+        <figcaption
+          className="copy min-h-[2.133cqmin] px-[4cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] leading-[1.2] text-balance text-neutral-800"
+          style={{ width: box.width }}
+        >
           {caption}
         </figcaption>
       </m.figure>
