@@ -65,6 +65,16 @@ export type SlideData = SlideBase &
       }
     | { design: "quote"; quote: string; author: string }
     | {
+        design: "scratch";
+        heading: string;
+        kicker: string;
+        /** Under the foil. */
+        prize: string;
+        image: Picture | null;
+        /** Below the ticket, once won. */
+        footnote: string;
+      }
+    | {
         design: "card";
         to: string;
         /** The postage stamp – its own, else the first sticker's picture. */

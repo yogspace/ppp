@@ -11,6 +11,8 @@ import {
   useRef,
   useState,
 } from "react";
+import { scratchParts } from "@/features/scratch/parse";
+import { Scratch } from "@/features/scratch/scratch";
 
 /**
  * How a slide's things fly in: each with a spring, a little after the
@@ -121,30 +123,43 @@ export const Words = ({
       // An empty line: a little room between paragraphs.
       line ? (
         <span className="block" key={`${li}-${line}`} style={lineStyle?.(li)}>
-          {line.split(/\s+/).map((word, wi) => {
-            const i = index++;
-            return (
-              <Fragment key={`${wi}-${word}`}>
-                {wi > 0 && " "}
-                <m.span
-                  animate={{ y: "0em", rotate: 0, scale: 1, opacity: 1 }}
-                  className="inline-block"
-                  initial={{
-                    y: "-0.7em",
-                    rotate: tilt(i),
-                    scale: 0.5,
-                    opacity: 0,
-                  }}
-                  transition={{
-                    default: { ...BOUNCY, delay: base + delay + i * gap },
-                    opacity: { duration: 0.15, delay: base + delay + i * gap },
-                  }}
-                >
-                  {word}
-                </m.span>
-              </Fragment>
-            );
-          })}
+          {/* Word by word – a secret (`||…||`) flies in as one, under foil. */}
+          {scratchParts(line)
+            .flatMap((part) =>
+              part.secret
+                ? [{ word: part.text, secret: true }]
+                : part.text
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .map((word) => ({ word, secret: false }))
+            )
+            .map(({ word, secret }, wi) => {
+              const i = index++;
+              return (
+                <Fragment key={`${wi}-${word}`}>
+                  {wi > 0 && " "}
+                  <m.span
+                    animate={{ y: "0em", rotate: 0, scale: 1, opacity: 1 }}
+                    className="inline-block"
+                    initial={{
+                      y: "-0.7em",
+                      rotate: tilt(i),
+                      scale: 0.5,
+                      opacity: 0,
+                    }}
+                    transition={{
+                      default: { ...BOUNCY, delay: base + delay + i * gap },
+                      opacity: {
+                        duration: 0.15,
+                        delay: base + delay + i * gap,
+                      },
+                    }}
+                  >
+                    {secret ? <Scratch>{word}</Scratch> : word}
+                  </m.span>
+                </Fragment>
+              );
+            })}
         </span>
       ) : (
         <span aria-hidden className="block h-[0.6em]" key={`gap-${li}`} />

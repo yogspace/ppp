@@ -170,6 +170,9 @@ export interface Deck {
    * The controls at the bottom (dots, full screen, arranging) – shown with the mouse at the bottom edge, H or a long press. Off: only the slides' own buttons.
    */
   dock?: boolean | null;
+  /**
+   * Tip: in any text, ||like this|| hides words under a scratch-off foil – rubbed free on the slide.
+   */
   slides: (
     | {
         /**
@@ -746,6 +749,76 @@ export interface Deck {
       }
     | {
         /**
+         * Above the ticket – “Rubbel mal”.
+         */
+        heading?: string | null;
+        /**
+         * On the ticket's head, small – “Hauptgewinn”.
+         */
+        kicker?: string | null;
+        /**
+         * Under the foil, big – each line a line.
+         */
+        prize: string;
+        /**
+         * Optional – beside the prize, under the foil too.
+         */
+        image?: (string | null) | Media;
+        /**
+         * Below the ticket once it's won.
+         */
+        footnote?: string | null;
+        /**
+         * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
+         */
+        stickers?:
+          | {
+              sticker: string | Sticker;
+              id?: string | null;
+            }[]
+          | null;
+        /**
+         * Only this slide's. Empty: the deck's default.
+         */
+        theme?: (string | null) | Theme;
+        /**
+         * How this slide comes in. Empty: the deck's default. 💾 PowerPoint 2003.
+         */
+        transition?:
+          | (
+              | 'swipe'
+              | 'boing'
+              | 'pop'
+              | 'toss'
+              | 'flip'
+              | 'hinge'
+              | 'jelly'
+              | 'zoom'
+              | 'blob'
+              | 'confetti'
+              | 'curtain'
+              | 'fade'
+              | 'cut'
+              | 'spinner'
+              | 'checkerboard'
+              | 'blinds'
+              | 'dissolve'
+              | 'star'
+              | 'heart'
+              | 'clock'
+              | 'surprise'
+            )
+          | null;
+        /**
+         * Words on this slide's next button. Empty: the deck's (or just an arrow).
+         */
+        nextLabel?: string | null;
+        id?: string | null;
+        blockName?: string | null;
+        blockType: 'scratch';
+      }
+    | {
+        /**
          * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
         stickers?:
@@ -1227,6 +1300,26 @@ export interface DecksSelect<T extends boolean = true> {
               greeting?: T;
               message?: T;
               from?: T;
+              stickers?:
+                | T
+                | {
+                    sticker?: T;
+                    id?: T;
+                  };
+              theme?: T;
+              transition?: T;
+              nextLabel?: T;
+              id?: T;
+              blockName?: T;
+            };
+        scratch?:
+          | T
+          | {
+              heading?: T;
+              kicker?: T;
+              prize?: T;
+              image?: T;
+              footnote?: T;
               stickers?:
                 | T
                 | {

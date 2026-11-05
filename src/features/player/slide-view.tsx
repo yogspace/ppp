@@ -3,6 +3,9 @@
 import { m } from "motion/react";
 import { type CSSProperties, useContext, useEffect, useState } from "react";
 import type { Picture } from "@/features/media/picture";
+import { unmarked } from "@/features/scratch/parse";
+import { ScratchText } from "@/features/scratch/scratch";
+import { ScratchSlide } from "@/features/scratch/scratch-slide";
 import { isDark } from "@/features/themes/theme";
 import { cn } from "@/lib/cn";
 import { Enter, EnterDelay, useFit, Words } from "./enter";
@@ -69,7 +72,7 @@ const Pill = ({ text, accent }: { text: string; accent: string }) => (
       color: isDark(accent) ? "#ffffff" : "#111111",
     }}
   >
-    {text}
+    <ScratchText text={text} />
   </Enter>
 );
 
@@ -92,7 +95,7 @@ const Cover = ({ slide }: { slide: Of<"cover"> }) => {
           className="copy max-w-[106.667cqmin] text-[4.267cqmin] whitespace-pre-line opacity-75"
           delay={0.5}
         >
-          {slide.subtitle}
+          <ScratchText text={slide.subtitle} />
         </Enter>
       )}
     </div>
@@ -417,12 +420,14 @@ const List = ({
                   >
                     {i + 1}
                   </m.span>
-                  <span>{item.text}</span>
+                  <span>
+                    <ScratchText text={item.text} />
+                  </span>
                 </m.span>
                 {/* Once all are there, a tap on a point shows its picture. */}
                 {pictured && shown && !waiting && item.picture && (
                   <button
-                    aria-label={`Show the picture for ${item.text}`}
+                    aria-label={`Show the picture for ${unmarked(item.text)}`}
                     className="absolute inset-0 cursor-pointer rounded-[1.2em]"
                     onClick={() => setPicked(i)}
                     type="button"
@@ -537,7 +542,7 @@ const PictureSlide = ({ slide }: { slide: Of<"picture"> }) => {
             delay={0.6}
             kind="pop"
           >
-            {slide.caption}
+            <ScratchText text={slide.caption} />
           </Enter>
         )}
       </>
@@ -576,7 +581,7 @@ const Framed = ({ image, caption }: { image: Picture; caption: string }) => {
           className="copy min-h-[2.133cqmin] px-[4cqmin] py-[1.6cqmin] text-center text-[3.378cqmin] leading-[1.2] text-balance text-neutral-800"
           style={{ width: box.width }}
         >
-          {caption}
+          <ScratchText text={caption} />
         </figcaption>
       </m.figure>
     </div>
@@ -783,7 +788,7 @@ const GalleryStack = ({
                   fontSize: Math.max(12, 1.5 * u),
                 }}
               >
-                {caption}
+                <ScratchText text={caption} />
               </span>
             </m.button>
           );
@@ -911,7 +916,7 @@ const Gallery = ({ slide }: { slide: Of<"gallery"> }) => {
                   fontSize: Math.max(11, 1.3 * u),
                 }}
               >
-                {caption}
+                <ScratchText text={caption} />
               </span>
             </m.button>
           );
@@ -951,7 +956,7 @@ const Quote = ({ slide }: { slide: Of<"quote"> }) => {
             className="mt-[0.6em] block text-[3.911cqmin] leading-snug opacity-75 tall:text-[4.6cqmin]"
             delay={0.7}
           >
-            — {slide.author}
+            — <ScratchText text={slide.author} />
           </Enter>
         )}
       </div>
@@ -990,6 +995,8 @@ export const SlideView = ({
       );
     case "quote":
       return <Quote slide={slide} />;
+    case "scratch":
+      return <ScratchSlide onForward={onForward} slide={slide} step={step} />;
     default:
       return null;
   }

@@ -133,6 +133,16 @@ const slideOf = (
         message: slide.message,
         from: slide.from ?? "",
       };
+    case "scratch":
+      return {
+        ...base,
+        design: "scratch",
+        heading: slide.heading ?? "",
+        kicker: slide.kicker ?? "",
+        prize: slide.prize,
+        image: pictureOf(slide.image),
+        footnote: slide.footnote ?? "",
+      };
     case "blank":
       return { ...base, design: "blank" };
     default:

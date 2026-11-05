@@ -12,6 +12,7 @@ export const DESIGN_LABELS = {
   split: { label: "Words + picture", group: "Pictures" },
   gallery: { label: "Gallery", group: "Pictures" },
   card: { label: "Card", group: "Other" },
+  scratch: { label: "Scratch ticket", group: "Other" },
   blank: { label: "Just stickers", group: "Other" },
 } as const;
 

@@ -18,6 +18,8 @@ export const stepsOf = (slide: SlideData) => {
   }
   // A Card: out of its envelope, then folded open.
   if (slide.design === "card") return 2;
+  // A scratch ticket: rubbed free.
+  if (slide.design === "scratch") return 1;
   return 0;
 };
 

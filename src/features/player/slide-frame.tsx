@@ -11,6 +11,7 @@ import {
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SlideBackground } from "@/features/backdrop/slide-background";
 import { CardSlide } from "@/features/cards/card-slide";
+import { ScratchHint, ScratchScope } from "@/features/scratch/scratch";
 import type { Arrangement, Placement } from "@/features/stickers/arrangement";
 import { StickerLayer } from "@/features/stickers/sticker-layer";
 import { lookVars } from "@/features/themes/theme";
@@ -146,31 +147,37 @@ export const SlideFrame = ({
       <SlideMoving.Provider value={!still}>
         {/* The slide's inside: cut to its edges; what turns in a flip. */}
         <div className="absolute inset-0 overflow-hidden" ref={inside}>
-          <SlideBackground look={slide.look} />
-          <EnterDelay.Provider value={spec.settle}>
-            {slide.design === "card" ? (
-              <CardSlide
-                arrangement={arrangement}
-                arranging={arranging}
-                onArrange={onArrange}
-                onStep={onStep}
-                slide={slide}
-                step={step}
-              />
-            ) : (
-              <>
-                <SlideView onForward={onStep} slide={slide} step={step} />
-                <StickerLayer
+          <ScratchScope>
+            <SlideBackground look={slide.look} />
+            <EnterDelay.Provider value={spec.settle}>
+              {slide.design === "card" ? (
+                <CardSlide
                   arrangement={arrangement}
                   arranging={arranging}
-                  delay={spec.settle + 0.45}
                   onArrange={onArrange}
-                  scale={height > width ? TALL_STICKERS : 1}
-                  stickers={slide.stickers}
+                  onStep={onStep}
+                  slide={slide}
+                  step={step}
                 />
-              </>
+              ) : (
+                <>
+                  <SlideView onForward={onStep} slide={slide} step={step} />
+                  <StickerLayer
+                    arrangement={arrangement}
+                    arranging={arranging}
+                    delay={spec.settle + 0.45}
+                    onArrange={onArrange}
+                    scale={height > width ? TALL_STICKERS : 1}
+                    stickers={slide.stickers}
+                  />
+                </>
+              )}
+            </EnterDelay.Provider>
+            {/* Foil still on somewhere: “rub to reveal” (the card has its own). */}
+            {slide.design !== "card" && (
+              <ScratchHint delay={spec.settle + 1.4} />
             )}
-          </EnterDelay.Provider>
+          </ScratchScope>
         </div>
       </SlideMoving.Provider>
     </m.section>

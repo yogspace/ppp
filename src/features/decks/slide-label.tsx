@@ -10,6 +10,7 @@ type Row = {
   title?: string;
   heading?: string;
   quote?: string;
+  prize?: string;
   caption?: string;
   pictures?: unknown[];
   stickers?: unknown[];
@@ -49,6 +50,7 @@ export const SlideLabel = () => {
     data?.title ||
     data?.heading ||
     data?.quote ||
+    data?.prize ||
     data?.caption ||
     ""
   )

@@ -52,7 +52,7 @@ const Blob = ({ look, duration }: { look: ThemeLook; duration: number }) => (
 );
 
 /** A burst of confetti from the middle, falling as it fades. */
-const Confetti = () => (
+export const Confetti = () => (
   <>
     {Array.from({ length: 70 }, (_, i) => {
       const angle = (i / 70) * 360 + ((i * 37) % 17) - 8;

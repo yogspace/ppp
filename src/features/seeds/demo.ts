@@ -393,11 +393,21 @@ export const seedDemo = async (payload: Payload, mode: Mode) => {
             ),
           },
           {
+            blockType: "scratch",
+            heading: "Feeling lucky?",
+            kicker: "Grand prize",
+            prize: "A slide\nall your own",
+            footnote: "Rub it with a finger – or just tap next.",
+            theme: look.marble,
+            transition: "pop",
+            stickers: stickers("star", "rainbow"),
+          },
+          {
             blockType: "card",
             to: "you",
             headline: "Thank\nyou!",
             message:
-              "Thanks for clicking through. A card is a slide too – this one even folds open.",
+              "Thanks for clicking through. A card is a slide too – this one even folds open. And words can hide: ||rub me free||.",
             from: "ppp",
             theme: look.luminous,
             transition: "blob",

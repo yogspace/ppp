@@ -347,5 +347,47 @@ export const DESIGNS: Block[] = [
       },
     ]
   ),
+  design(
+    "scratch",
+    "A scratch-off ticket: rubbed free with a finger – or the next button does it.",
+    [
+      {
+        name: "heading",
+        type: "text",
+        admin: { description: "Above the ticket – “Rubbel mal”." },
+      },
+      {
+        name: "kicker",
+        type: "text",
+        admin: {
+          placeholder: "Lucky ticket",
+          description: "On the ticket's head, small – “Hauptgewinn”.",
+        },
+      },
+      {
+        name: "prize",
+        type: "textarea",
+        required: true,
+        admin: {
+          rows: 2,
+          description: "Under the foil, big – each line a line.",
+        },
+      },
+      {
+        name: "image",
+        type: "upload",
+        relationTo: "media",
+        filterOptions: { mimeType: { contains: "image" } },
+        admin: {
+          description: "Optional – beside the prize, under the foil too.",
+        },
+      },
+      {
+        name: "footnote",
+        type: "text",
+        admin: { description: "Below the ticket once it's won." },
+      },
+    ]
+  ),
   design("blank", "Nothing but the theme and stickers.", []),
 ];

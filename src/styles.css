@@ -232,6 +232,30 @@
 }
 
 /* The confetti transition (transitions/overlay.tsx). */
+/* A sheen across a scratch-off foil (scratch/scratch.tsx). */
+@keyframes foil-shine {
+  0%,
+  55% {
+    translate: 0 0;
+  }
+  100% {
+    translate: 500% 0;
+  }
+}
+
+/* A finger rubbing to and fro (scratch hint). */
+@keyframes rub {
+  0%,
+  100% {
+    translate: -0.18em 0.05em;
+    rotate: -12deg;
+  }
+  50% {
+    translate: 0.18em -0.05em;
+    rotate: 8deg;
+  }
+}
+
 @keyframes confetti {
   0% {
     opacity: 0;

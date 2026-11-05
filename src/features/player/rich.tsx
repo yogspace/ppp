@@ -5,6 +5,9 @@ import {
   LinkJSXConverter,
   RichText,
 } from "@payloadcms/richtext-lexical/react";
+import { Fragment } from "react";
+import { hasSecret, scratchParts } from "@/features/scratch/parse";
+import { Scratch } from "@/features/scratch/scratch";
 import type { RichBody } from "./types";
 
 /** A link to another deck or card: its address. */
@@ -22,6 +25,21 @@ const internalDocToHref = ({
 const converters: JSXConvertersFunction = ({ defaultConverters }) => ({
   ...defaultConverters,
   ...LinkJSXConverter({ internalDocToHref }),
+  // A secret (`||…||`) in a run of text: under foil, its bold or italic kept.
+  text: (args) => {
+    const plain = defaultConverters.text;
+    if (typeof plain !== "function") return args.node.text;
+    if (!hasSecret(args.node.text)) return plain(args);
+    return scratchParts(args.node.text).map((part, i) => {
+      const shown = plain({ ...args, node: { ...args.node, text: part.text } });
+      const key = `${i}-${part.text}`;
+      return part.secret ? (
+        <Scratch key={key}>{shown}</Scratch>
+      ) : (
+        <Fragment key={key}>{shown}</Fragment>
+      );
+    });
+  },
 });
 
 /** A slide's rich text – paragraphs, bold, italic, links. */

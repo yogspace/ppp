@@ -4,6 +4,7 @@ import { AnimatePresence, m } from "motion/react";
 import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { EnterDelay, useFit, Words } from "@/features/player/enter";
 import type { SlideData } from "@/features/player/types";
+import { ScratchText } from "@/features/scratch/scratch";
 import type { Arrangement, Placement } from "@/features/stickers/arrangement";
 import { StickerLayer } from "@/features/stickers/sticker-layer";
 import {
@@ -253,7 +254,7 @@ export const CardSlide = ({
                   initial={{ opacity: 0, y: 10 }}
                   transition={{ delay: 1.3 }}
                 >
-                  {slide.from}
+                  <ScratchText text={slide.from} />
                 </m.p>
                 <Swash color={look.accent} />
               </div>
@@ -321,7 +322,9 @@ export const CardSlide = ({
               }}
             >
               <p className="headline text-[12cqw] normal-case">
-                {slide.greeting || `Dear ${slide.to || "you"},`}
+                <ScratchText
+                  text={slide.greeting || `Dear ${slide.to || "you"},`}
+                />
               </p>
               {open && (
                 <button

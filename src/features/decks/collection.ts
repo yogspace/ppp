@@ -111,6 +111,10 @@ export const Decks: CollectionConfig = {
       minRows: 1,
       labels: { singular: "Slide", plural: "Slides" },
       blocks: DESIGNS,
+      admin: {
+        description:
+          "Tip: in any text, ||like this|| hides words under a scratch-off foil – rubbed free on the slide.",
+      },
     },
     arrangementField(),
   ],
