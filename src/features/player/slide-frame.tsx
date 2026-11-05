@@ -5,9 +5,10 @@ import {
   m,
   useIsPresent,
   useMotionValue,
+  usePresenceData,
   useTransform,
 } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SlideBackground } from "@/features/backdrop/slide-background";
 import { CardSlide } from "@/features/cards/card-slide";
 import type { Arrangement, Placement } from "@/features/stickers/arrangement";
@@ -74,18 +75,55 @@ export const SlideFrame = ({
     return () => controls.stop();
   }, [spec.reveal, progress]);
 
-  // Still in place: its own move done, its wipe or cover gone, not leaving.
+  // The turn over (flip), by the browser itself on the slide's inside – on
+  // the compositor, smooth while the page builds the new slide. Out: to the
+  // edge, speeding up; in: from the other edge, slowing down – mirrored, so
+  // the turn runs through the middle without a jolt.
   const present = useIsPresent();
+  const leaving = usePresenceData() as Move | undefined;
+  const inside = useRef<HTMLDivElement>(null);
+  const turn = (dir: number) => `perspective(1800px) rotateY(${dir * 90}deg)`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, coming in
+  useLayoutEffect(() => {
+    const half = spec.turn?.half;
+    if (!(half && inside.current)) return;
+    const run = inside.current.animate(
+      [{ transform: turn(-own.dir) }, { transform: turn(0) }],
+      {
+        duration: half * 1000,
+        delay: half * 1000,
+        easing: "cubic-bezier(0.61, 1, 0.88, 1)",
+        fill: "backwards",
+      }
+    );
+    return () => run.cancel();
+  }, []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, going
+  useLayoutEffect(() => {
+    const half = leaving && specOf(leaving.kind).turn?.half;
+    if (present || !(half && leaving && inside.current)) return;
+    inside.current.animate(
+      [{ transform: turn(0) }, { transform: turn(leaving.dir) }],
+      {
+        duration: half * 1000,
+        easing: "cubic-bezier(0.12, 0, 0.39, 0)",
+        fill: "forwards",
+      }
+    );
+  }, [present]);
+
+  // Still in place: its own move done, its wipe or cover gone, not leaving.
   const [landed, setLanded] = useState(false);
   const [uncovered, setUncovered] = useState(false);
   useEffect(() => {
     const wait = Math.max(
       spec.reveal?.duration ?? 0,
-      spec.cover?.duration ?? 0
+      spec.cover?.duration ?? 0,
+      (spec.turn?.half ?? 0) * 2
     );
     const timer = window.setTimeout(() => setUncovered(true), wait * 1000);
     return () => window.clearTimeout(timer);
-  }, [spec.reveal, spec.cover]);
+  }, [spec.reveal, spec.cover, spec.turn]);
   const still = present && landed && uncovered;
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, when still
   useEffect(() => {
@@ -96,7 +134,7 @@ export const SlideFrame = ({
     <m.section
       animate="center"
       aria-roledescription="slide"
-      className="slide absolute inset-0 overflow-hidden"
+      className="slide absolute inset-0"
       custom={own}
       data-font={slide.look.font}
       exit="exit"
@@ -106,31 +144,34 @@ export const SlideFrame = ({
       variants={frameVariants}
     >
       <SlideMoving.Provider value={!still}>
-        <SlideBackground look={slide.look} />
-        <EnterDelay.Provider value={spec.settle}>
-          {slide.design === "card" ? (
-            <CardSlide
-              arrangement={arrangement}
-              arranging={arranging}
-              onArrange={onArrange}
-              onStep={onStep}
-              slide={slide}
-              step={step}
-            />
-          ) : (
-            <>
-              <SlideView onForward={onStep} slide={slide} step={step} />
-              <StickerLayer
+        {/* The slide's inside: cut to its edges; what turns in a flip. */}
+        <div className="absolute inset-0 overflow-hidden" ref={inside}>
+          <SlideBackground look={slide.look} />
+          <EnterDelay.Provider value={spec.settle}>
+            {slide.design === "card" ? (
+              <CardSlide
                 arrangement={arrangement}
                 arranging={arranging}
-                delay={spec.settle + 0.45}
                 onArrange={onArrange}
-                scale={height > width ? TALL_STICKERS : 1}
-                stickers={slide.stickers}
+                onStep={onStep}
+                slide={slide}
+                step={step}
               />
-            </>
-          )}
-        </EnterDelay.Provider>
+            ) : (
+              <>
+                <SlideView onForward={onStep} slide={slide} step={step} />
+                <StickerLayer
+                  arrangement={arrangement}
+                  arranging={arranging}
+                  delay={spec.settle + 0.45}
+                  onArrange={onArrange}
+                  scale={height > width ? TALL_STICKERS : 1}
+                  stickers={slide.stickers}
+                />
+              </>
+            )}
+          </EnterDelay.Provider>
+        </div>
       </SlideMoving.Provider>
     </m.section>
   );

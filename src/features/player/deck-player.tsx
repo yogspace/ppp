@@ -304,10 +304,6 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          style={{
-            background: slide.look.bg,
-            transition: "background-color 0.6s ease",
-          }}
         >
           <h1 className="sr-only">{deck.title}</h1>
           <AroundStage>

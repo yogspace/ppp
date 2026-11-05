@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { RefreshOnSave } from "@/components/refresh-on-save";
@@ -6,6 +6,7 @@ import { deckData } from "@/features/decks/data";
 import { DeckPlayer } from "@/features/player/deck-player";
 import { slideFromSegments, slideHref } from "@/features/player/steps";
 import { SLUG } from "@/features/slug/slug";
+import { isDark } from "@/features/themes/theme";
 import { payload, viewer } from "@/lib/payload";
 
 // Read anew on every request: what was saved in the admin shows at once.
@@ -30,6 +31,25 @@ export const generateMetadata = async ({
 }: Props): Promise<Metadata> => {
   const deck = await find((await params).slug);
   return deck ? { title: deck.title } : {};
+};
+
+/**
+ * The browser's own color – Safari's bars on an iPhone – from the slide the
+ * address opens, already in the page as it comes (as in the portfolio); the
+ * player follows it from slide to slide (player/document-color.ts).
+ */
+export const generateViewport = async ({
+  params,
+}: Props): Promise<Viewport> => {
+  const { slug, slide } = await params;
+  const found = await find(slug);
+  if (!found) return {};
+  const deck = deckData(found);
+  const at = slideFromSegments(slide, deck.slides.length);
+  const bg = deck.slides[at?.slide ?? 0]?.look.bg;
+  return bg
+    ? { themeColor: bg, colorScheme: isDark(bg) ? "dark" : "light" }
+    : {};
 };
 
 /**

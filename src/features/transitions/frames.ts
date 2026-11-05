@@ -23,6 +23,12 @@ type Spec = {
   reveal?: { kind: RevealKind; duration: number };
   /** Something covers the change (overlay.tsx); slides swap at `mid` (s). */
   cover?: { duration: number; mid: number };
+  /**
+   * A turn over (the flip): run by the browser on the slide's inside
+   * (slide-frame.tsx), out then in, each half this long (s) – smooth even
+   * while the page is busy building the new slide.
+   */
+  turn?: { half: number };
   /** When the new slide's own things start flying in (s). */
   settle: number;
 };
@@ -89,16 +95,11 @@ const SPECS: Record<TransitionKind, Spec> = {
     settle: 0.3,
   },
   flip: {
-    from: (dir) => ({ rotateY: -dir * 90, transformPerspective: 1800 }),
-    // Turns on where the old one stopped, and lands – no wobble.
-    in: { duration: 0.36, ease: [0.15, 0.75, 0.3, 1], delay: 0.29 },
-    out: (dir) => ({
-      rotateY: dir * 90,
-      transformPerspective: 1800,
-      opacity: [1, 1, 0],
-      transition: { duration: 0.3, ease: "easeIn", times: [0, 0.97, 1] },
-    }),
-    settle: 0.45,
+    // The turning itself: `turn` – the frames only wait for it.
+    in: { duration: 0 },
+    out: () => hold(0.34),
+    turn: { half: 0.33 },
+    settle: 0.5,
   },
   hinge: {
     from: () => ({ scale: 0.95 }),

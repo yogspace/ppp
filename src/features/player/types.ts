@@ -38,6 +38,8 @@ export type SlideData = SlideBase &
         /** Each with its picture, if it has one. */
         items: { text: string; picture: Picture | null }[];
         stepwise: boolean;
+        /** Its pictures: a stack, one on top – or scattered, all at once. */
+        pictureLayout: "stack" | "scatter";
       }
     | {
         design: "picture";

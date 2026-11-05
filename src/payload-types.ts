@@ -365,6 +365,7 @@ export interface Deck {
           id?: string | null;
         }[];
         stepwise?: boolean | null;
+        pictureLayout?: ('stack' | 'scatter') | null;
         /**
          * From the sticker library. Each gets a white die-cut edge and turns 3D. Arrange them on the page: open it logged in and press E.
          */
@@ -1124,6 +1125,7 @@ export interface DecksSelect<T extends boolean = true> {
                     id?: T;
                   };
               stepwise?: T;
+              pictureLayout?: T;
               stickers?:
                 | T
                 | {

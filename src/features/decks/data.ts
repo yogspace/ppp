@@ -81,6 +81,7 @@ const slideOf = (
           item.text ? [{ text: item.text, picture: pictureOf(item.image) }] : []
         ),
         stepwise: slide.stepwise ?? false,
+        pictureLayout: slide.pictureLayout === "scatter" ? "scatter" : "stack",
       };
     case "picture":
       return {

@@ -167,6 +167,31 @@ export const DESIGNS: Block[] = [
       label: "One click per point",
       defaultValue: false,
     },
+    {
+      name: "pictureLayout",
+      type: "select",
+      label: "Pictures",
+      defaultValue: "stack",
+      options: [
+        {
+          label:
+            "Stack – one on top, the point's; each next point throws it off",
+          value: "stack",
+        },
+        {
+          label:
+            "Scattered – all lying about; a picture tapped lights up its point, a point its picture",
+          value: "scatter",
+        },
+      ],
+      admin: {
+        isClearable: false,
+        // Only when a point has a picture.
+        condition: (_, siblings) =>
+          Array.isArray(siblings?.items) &&
+          siblings.items.some((item: { image?: unknown }) => item?.image),
+      },
+    },
   ]),
   design("picture", "One picture, framed or filling the slide.", [
     picture(),
@@ -175,6 +200,7 @@ export const DESIGNS: Block[] = [
       name: "fit",
       type: "select",
       defaultValue: "framed",
+      admin: { isClearable: false },
       options: [
         { label: "Framed – flies in, a little tilted", value: "framed" },
         { label: "Full – fills the slide", value: "full" },
@@ -220,6 +246,7 @@ export const DESIGNS: Block[] = [
         name: "layout",
         type: "select",
         defaultValue: "pile",
+        admin: { isClearable: false },
         options: [
           {
             label: "Pile – scattered polaroids, a tap brings one up close",

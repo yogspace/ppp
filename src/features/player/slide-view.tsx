@@ -202,6 +202,109 @@ const ListPictures = ({
   );
 };
 
+/**
+ * A List's pictures scattered: polaroids lying about beside the list (above
+ * it on an upright screen), each flying in with its point. The point that
+ * is on lights up its picture – to the front, bigger, straight, rimmed in
+ * the accent – and a tap on a picture puts its point on.
+ */
+const ListScatter = ({
+  pictures,
+  on,
+  shown,
+  delay,
+  onPick,
+}: {
+  pictures: { picture: Picture; index: number }[];
+  /** The point that is on. */
+  on: number;
+  /** Whether a point (by its index) is shown yet. */
+  shown: (index: number) => boolean;
+  delay: number;
+  onPick: (index: number) => void;
+}) => {
+  const { width: stageW, height: stageH } = useStageSize();
+  const tall = stageH > stageW;
+  const u = unitOf(stageW, stageH);
+  const width = stageW * (tall ? 0.8 : 0.42);
+  const height = stageH * (tall ? 0.36 : 0.74);
+  const spots = pileSpots(pictures.length, width, height);
+  return (
+    <div className="relative flex-none" style={{ width, height }}>
+      {pictures.map(({ picture, index }, i) => {
+        const spot = spots[i];
+        const aspect = picture.width / picture.height || 1;
+        const pad = 0.7 * u;
+        const photoW = Math.min(spot.w - 2 * pad, (spot.h - 2 * pad) * aspect);
+        const frameW = photoW + 2 * pad;
+        const frameH = photoW / aspect + 2 * pad;
+        const there = shown(index);
+        const lit = there && index === on;
+        return (
+          <m.button
+            animate={
+              there
+                ? {
+                    x: 0,
+                    y: lit ? -0.6 * u : 0,
+                    rotate: lit ? 0 : spot.r,
+                    scale: lit ? 1.14 : 0.94,
+                    opacity: 1,
+                  }
+                : {
+                    x: 0.5 * stageW,
+                    y: 0.3 * stageH,
+                    rotate: spot.r * 4,
+                    scale: 0.94,
+                    opacity: 0,
+                  }
+            }
+            aria-label={`Show the point for ${picture.alt || "this picture"}`}
+            aria-pressed={lit}
+            className="absolute block rounded-[0.711cqmin] bg-white outline-solid outline-0 outline-(--accent) transition-[outline-width] duration-200 data-lit:outline-[0.5cqmin]"
+            data-lit={lit || undefined}
+            disabled={!there}
+            initial={{
+              x: 0.5 * stageW,
+              y: 0.3 * stageH,
+              rotate: spot.r * 4,
+              opacity: 0,
+            }}
+            key={`${index}-${picture.src}`}
+            onClick={() => onPick(index)}
+            style={{
+              left: spot.x - frameW / 2,
+              top: spot.y - frameH / 2,
+              width: frameW,
+              padding: pad,
+              zIndex: lit ? 30 : i,
+              boxShadow: lit
+                ? "0 2.4cqmin 5cqmin -1.6cqmin rgb(0 0 0 / 0.5)"
+                : "0 1cqmin 2.4cqmin -1.2cqmin rgb(0 0 0 / 0.4)",
+            }}
+            transition={{
+              default: {
+                type: "spring",
+                stiffness: 260,
+                damping: 22,
+                delay: there ? delay : 0,
+              },
+              opacity: { duration: 0.2, delay: there ? delay : 0 },
+            }}
+            type="button"
+          >
+            <Media
+              className="block w-full rounded-[0.356cqmin] object-cover"
+              picture={picture}
+              style={{ aspectRatio: `${aspect}` }}
+            />
+          </m.button>
+        );
+      })}
+    </div>
+  );
+};
+
 const List = ({
   slide,
   step,
@@ -338,7 +441,16 @@ const List = ({
           />
         )}
       </div>
-      {pile.length > 0 && (
+      {pile.length > 0 && slide.pictureLayout === "scatter" && (
+        <ListScatter
+          delay={slide.stepwise ? 0.05 : base + 0.3}
+          on={on}
+          onPick={setPicked}
+          pictures={pile}
+          shown={(index) => !slide.stepwise || step > index}
+        />
+      )}
+      {pile.length > 0 && slide.pictureLayout !== "scatter" && (
         <ListPictures
           delay={slide.stepwise ? 0.1 : base + 0.3}
           pictures={pile.map((entry) => entry.picture)}
