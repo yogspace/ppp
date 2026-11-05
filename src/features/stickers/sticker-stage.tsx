@@ -84,14 +84,15 @@ export const StickerStage = ({ children }: { children: ReactNode }) => {
 
 /**
  * The stickers' 3D canvas: over the slides, under the slide's own buttons
- * and the confetti (the stage's layer above) – put where that holds.
+ * and the confetti (the stage's layer above) – put where that holds, in the
+ * player filling the screen (absolute, not fixed: see deck-player.tsx).
  */
 export const StickerCanvas = () => {
   const { canvasRef } = useStickerStage();
   return (
     <canvas
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-30 size-full"
+      className="pointer-events-none absolute inset-0 z-30 size-full"
       ref={canvasRef}
     />
   );

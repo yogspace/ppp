@@ -116,20 +116,21 @@ export const Controls = ({
 
   return (
     <>
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[3px] bg-black/5 transition-opacity duration-300",
-          !shown && "opacity-0"
-        )}
-      >
-        <m.i
-          animate={{ scaleX: count > 1 ? slide / (count - 1) : 1 }}
-          className="block h-full origin-left bg-(--accent)"
-          initial={false}
-          transition={SPRING}
-        />
-      </div>
+      {/* Only while the controls show: a strip at the screen's edge is what
+          Safari (iOS 26) would tint its bottom bar from. */}
+      {shown && (
+        <div
+          aria-hidden
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-40 h-[3px] bg-black/5"
+        >
+          <m.i
+            animate={{ scaleX: count > 1 ? slide / (count - 1) : 1 }}
+            className="block h-full origin-left bg-(--accent)"
+            initial={false}
+            transition={SPRING}
+          />
+        </div>
+      )}
 
       <AnimatePresence>
         {arranging && (
@@ -159,7 +160,18 @@ export const Controls = ({
 
       {dock && (
         <m.nav
-          animate={{ y: shown ? 0 : 24, opacity: shown ? 1 : 0 }}
+          animate={
+            shown
+              ? { y: 0, opacity: 1, visibility: "visible" }
+              : {
+                  y: 24,
+                  opacity: 0,
+                  // Gone once faded: a hidden dark pill at the screen's edge
+                  // would still tint Safari's bottom bar (iOS 26). Still
+                  // measured where it would be (useDock).
+                  transitionEnd: { visibility: "hidden" },
+                }
+          }
           aria-label="Slides"
           className={cn(
             "fixed bottom-[max(0.9rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex -translate-x-1/2 items-center gap-1 rounded-full bg-neutral-950/80 p-1 text-white shadow-[0_0.5rem_1.5rem_-0.5rem_rgb(0_0_0/0.5)] backdrop-blur",

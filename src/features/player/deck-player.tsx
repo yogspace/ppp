@@ -295,7 +295,10 @@ export const DeckPlayer = ({ deck, start, canArrange }: Props) => {
     <MotionProvider>
       <StickerStage>
         <main
-          className="fixed inset-0 grid touch-none place-items-center overflow-hidden"
+          // In the flow, not fixed: Safari (iOS 26) tints its bars from a
+          // fixed element at the screen's edge and keeps that color – the
+          // page's own color (document-color.ts) must decide.
+          className="relative grid h-dvh w-full touch-none place-items-center overflow-hidden"
           onContextMenu={(event) => event.preventDefault()}
           onPointerCancel={() => {
             if (down.current) window.clearTimeout(down.current.timer);
