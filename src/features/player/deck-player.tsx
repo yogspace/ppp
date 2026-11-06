@@ -70,7 +70,8 @@ export const DeckPlayer = ({
     deck.arrangement
   );
 
-  useEffect(() => player.remember(), [player]);
+  // Logged in, the dock is up – to go through the slides and arrange.
+  useEffect(() => player.remember(canArrange), [player, canArrange]);
 
   // The browser's back and forward: to the slide its address names.
   useEffect(() => {

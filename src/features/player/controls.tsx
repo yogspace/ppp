@@ -100,7 +100,9 @@ export const Controls = ({ canArrange, saveState }: Props) => {
   }, []);
   const dockRef = useRef<HTMLElement>(null);
   const docked = useDock(dockRef);
-  const shown = dock && (asked || docked || arranging);
+  // Logged in, there's a dock even where the deck has none (to review and
+  // arrange); for visitors only where it has one.
+  const shown = (dock || canArrange) && (asked || docked || arranging);
 
   return (
     <>
@@ -146,7 +148,7 @@ export const Controls = ({ canArrange, saveState }: Props) => {
         )}
       </AnimatePresence>
 
-      {dock && (
+      {(dock || canArrange) && (
         <m.nav
           animate={
             shown

@@ -29,7 +29,8 @@ export type PlayerState = {
 
 /** Longest a slide may take to arrive before the next move goes anyway (ms). */
 const SETTLE_AT_MOST = 1600;
-const CONTROLS_KEY = "ppp:controls";
+/** Where the controls' state is kept: a visitor's – and mine, logged in. */
+const CONTROLS_KEY = { visitor: "ppp:controls", editor: "ppp:controls-editor" };
 
 export const createPlayer = (
   initial: DeckData,
@@ -127,18 +128,22 @@ export const createPlayer = (
     },
     /**
      * The controls as this device last had them, and remembered from now
-     * on (a convenience: without storage they are just off). Undone by the
-     * function it returns.
+     * on (a convenience: without storage they are just off). Logged in
+     * (`editor`) they are up unless put away (H) – kept apart from a
+     * visitor's. Undone by the function it returns.
      */
-    remember: () => {
+    remember: (editor = false) => {
+      const key = editor ? CONTROLS_KEY.editor : CONTROLS_KEY.visitor;
       try {
-        state.controls = window.localStorage.getItem(CONTROLS_KEY) === "1";
+        const stored = window.localStorage.getItem(key);
+        state.controls = stored === null ? editor : stored === "1";
       } catch {
-        // No storage – off.
+        // No storage – off for a visitor, up when logged in.
+        state.controls = editor;
       }
       const stop = subscribeKey(state, "controls", (shown) => {
         try {
-          window.localStorage.setItem(CONTROLS_KEY, shown ? "1" : "0");
+          window.localStorage.setItem(key, shown ? "1" : "0");
         } catch {
           // No storage – it just isn't remembered.
         }
