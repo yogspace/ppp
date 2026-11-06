@@ -12,7 +12,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SlideBackground } from "@/features/backdrop/slide-background";
 import { CardSlide } from "@/features/cards/card-slide";
 import { ScratchHint, ScratchScope } from "@/features/scratch/scratch";
-import type { Arrangement, Placement } from "@/features/stickers/arrangement";
+import type {
+  Arrangement,
+  Placement,
+  Shape,
+} from "@/features/stickers/arrangement";
 import { StickerLayer } from "@/features/stickers/sticker-layer";
 import { lookVars } from "@/features/themes/theme";
 import {
@@ -34,7 +38,7 @@ type Props = {
   step: number;
   arrangement: Arrangement;
   arranging: boolean;
-  onArrange?: (id: string, placement: Placement | null) => void;
+  onArrange?: (id: string, placement: Placement | null, shape: Shape) => void;
   /** A tap that is the slide's next step (a point shown, a picture thrown). */
   onStep: () => void;
   /** It has arrived: its transition done, nothing over it. */
@@ -174,6 +178,7 @@ export const SlideFrame = ({
                     delay={spec.settle + 0.45}
                     onArrange={onArrange}
                     scale={height > width ? TALL_STICKERS : 1}
+                    shape={height > width ? "tall" : "wide"}
                     stickers={slide.stickers}
                   />
                 </>

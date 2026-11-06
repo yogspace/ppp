@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Arrangement, Placement } from "./arrangement";
+import type { Arrangement, Placement, Placements, Shape } from "./arrangement";
 
 export type SaveState = "idle" | "saving" | "saved" | "failed";
 
@@ -23,16 +23,20 @@ export const useArrange = (
   useEffect(() => setArrangement(initial), [initial]);
 
   const arrange = useCallback(
-    (sticker: string, placement: Placement | null) => {
+    (sticker: string, placement: Placement | null, shape: Shape = "wide") => {
       setArrangement((current) => {
+        const own: Placements = { ...current[sticker] };
+        if (placement) own[shape] = placement;
+        else delete own[shape];
         const next = { ...current };
-        if (placement) next[sticker] = placement;
+        if (own.wide || own.tall) next[sticker] = own;
         else delete next[sticker];
         return next;
       });
-      window.clearTimeout(timers.current.get(sticker));
+      const key = `${sticker}:${shape}`;
+      window.clearTimeout(timers.current.get(key));
       timers.current.set(
-        sticker,
+        key,
         window.setTimeout(async () => {
           setState("saving");
           try {
@@ -40,7 +44,7 @@ export const useArrange = (
               method: "POST",
               credentials: "include",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ sticker, placement }),
+              body: JSON.stringify({ sticker, placement, shape }),
             });
             setState(response.ok ? "saved" : "failed");
           } catch {

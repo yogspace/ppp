@@ -37,8 +37,9 @@ export const arrangementField = (): JSONField => ({
 });
 
 /**
- * `POST /api/decks/:id/arrange` – `{ sticker, placement }` from the page:
- * one sticker moved (or, with `placement: null`, put back). Admins only;
+ * `POST /api/decks/:id/arrange` – `{ sticker, placement, shape }` from the
+ * page: one sticker moved on a wide or a tall stage (or, with
+ * `placement: null`, put back there). Admins only;
  * Payload checks the request's origin for the login cookie.
  */
 export const arrangeEndpoint = <T extends { arrangement?: unknown }>(
@@ -67,7 +68,8 @@ export const arrangeEndpoint = <T extends { arrangement?: unknown }>(
       doc.arrangement,
       ids,
       request.sticker,
-      request.placement
+      request.placement,
+      request.shape
     );
     await req.payload.update({
       collection,

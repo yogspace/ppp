@@ -5,7 +5,11 @@ import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { EnterDelay, useFit, Words } from "@/features/player/enter";
 import type { SlideData } from "@/features/player/types";
 import { ScratchText } from "@/features/scratch/scratch";
-import type { Arrangement, Placement } from "@/features/stickers/arrangement";
+import type {
+  Arrangement,
+  Placement,
+  Shape,
+} from "@/features/stickers/arrangement";
 import { StickerLayer } from "@/features/stickers/sticker-layer";
 import {
   EnvelopeBack,
@@ -73,7 +77,7 @@ type Props = {
   slide: Extract<SlideData, { design: "card" }>;
   arrangement: Arrangement;
   arranging: boolean;
-  onArrange?: (id: string, placement: Placement | null) => void;
+  onArrange?: (id: string, placement: Placement | null, shape: Shape) => void;
   /**
    * The deck's steps on this slide (steps.ts): 0 sealed, 1 out of its
    * envelope, 2 folded open. A tap is the next step; ← goes a step back.

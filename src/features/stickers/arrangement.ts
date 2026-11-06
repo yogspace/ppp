@@ -2,7 +2,8 @@
  * Where the stickers sit. A slide's or card's stickers are listed in the
  * admin (which picture); where each one sits, how big and how turned, is
  * arranged on the page itself (logged in, E) and kept apart from the
- * admin's form – a document's `arrangement`, by the sticker's row id. The
+ * admin's form – a document's `arrangement`, by the sticker's row id: a
+ * place across (wide) and one upright (tall), each where it was arranged. The
  * form can't write it (field access), so saving the form never undoes an
  * arrangement made on the page meanwhile.
  *
@@ -16,7 +17,26 @@
  */
 export type Placement = { x: number; y: number; w: number; r: number };
 
-export type Arrangement = Record<string, Placement>;
+/**
+ * The stage's shape a placement is for: wide (16:9, a screen across) or
+ * tall (a phone held upright – the words lie elsewhere there).
+ */
+export type Shape = "wide" | "tall";
+
+/** A sticker's places – one per shape, each optional. */
+export type Placements = Partial<Record<Shape, Placement>>;
+
+export type Arrangement = Record<string, Placements>;
+
+/**
+ * Where a sticker lies on this shape: its own place for it; upright, else
+ * where it lies across – null: its default spot.
+ */
+export const placementFor = (
+  entry: Placements | undefined,
+  shape: Shape
+): Placement | null =>
+  entry?.[shape] ?? (shape === "tall" ? (entry?.wide ?? null) : null);
 
 /** Default spots, around the middle and over the words – the poster look. */
 const SPOTS: readonly [number, number][] = [
@@ -103,30 +123,45 @@ export const readPlacement = (value: unknown): Placement | null => {
 /** Row ids: Payload's ObjectIds, or anything short and plain. */
 const ID = /^[\w-]{1,64}$/;
 
+/** A sticker's stored places: `{ wide, tall }` – or, from before, one place (across). */
+const readPlacements = (value: unknown): Placements | null => {
+  const single = readPlacement(value);
+  if (single) return { wide: single };
+  if (!value || typeof value !== "object") return null;
+  const { wide, tall } = value as Record<string, unknown>;
+  const out: Placements = {};
+  const w = readPlacement(wide);
+  const t = readPlacement(tall);
+  if (w) out.wide = w;
+  if (t) out.tall = t;
+  return w || t ? out : null;
+};
+
 /** A stored arrangement, its broken entries left out. */
 export const readArrangement = (value: unknown): Arrangement => {
   const out: Arrangement = {};
   if (!value || typeof value !== "object" || Array.isArray(value)) return out;
   for (const [id, entry] of Object.entries(value)) {
-    const placement = ID.test(id) ? readPlacement(entry) : null;
-    if (placement) out[id] = placement;
+    const placements = ID.test(id) ? readPlacements(entry) : null;
+    if (placements) out[id] = placements;
   }
   return out;
 };
 
 /**
- * What the page sends when a sticker was moved: its row id and where it
- * sits now – null puts it back on its default spot.
+ * What the page sends when a sticker was moved: its row id, the stage's
+ * shape and where it sits now – null puts it back (on that shape).
  */
 export const readArrangeRequest = (
   body: unknown
-): { sticker: string; placement: Placement | null } | null => {
+): { sticker: string; placement: Placement | null; shape: Shape } | null => {
   if (!body || typeof body !== "object") return null;
-  const { sticker, placement } = body as Record<string, unknown>;
+  const { sticker, placement, shape: asked } = body as Record<string, unknown>;
   if (typeof sticker !== "string" || !ID.test(sticker)) return null;
-  if (placement === null) return { sticker, placement: null };
+  const shape: Shape = asked === "tall" ? "tall" : "wide";
+  if (placement === null) return { sticker, placement: null, shape };
   const read = readPlacement(placement);
-  return read ? { sticker, placement: read } : null;
+  return read ? { sticker, placement: read, shape } : null;
 };
 
 /**
@@ -137,12 +172,18 @@ export const arrange = (
   current: unknown,
   ids: ReadonlySet<string>,
   sticker: string,
-  placement: Placement | null
+  placement: Placement | null,
+  shape: Shape = "wide"
 ): Arrangement => {
   const next: Arrangement = {};
   for (const [id, entry] of Object.entries(readArrangement(current))) {
-    if (ids.has(id) && id !== sticker) next[id] = entry;
+    if (ids.has(id)) next[id] = entry;
   }
-  if (placement && ids.has(sticker)) next[sticker] = clampPlacement(placement);
+  if (!ids.has(sticker)) return next;
+  const own: Placements = { ...next[sticker] };
+  if (placement) own[shape] = clampPlacement(placement);
+  else delete own[shape];
+  if (own.wide || own.tall) next[sticker] = own;
+  else delete next[sticker];
   return next;
 };

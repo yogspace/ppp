@@ -3,6 +3,7 @@ import {
   arrange,
   clampPlacement,
   defaultPlacement,
+  placementFor,
   readArrangement,
   readArrangeRequest,
 } from "@/features/stickers/arrangement";
@@ -40,24 +41,39 @@ describe("sticker placements", () => {
 
 describe("arranging", () => {
   const ids = new Set(["a", "b"]);
+  const p = (x: number) => ({ x, y: 0.5, w: 0.2, r: 0 });
 
-  it("reads only sound entries from what is stored", () => {
+  it("reads only sound entries – one place from before is the wide one", () => {
     expect(
       readArrangement({
-        a: { x: 0.5, y: 0.5, w: 0.2, r: 0 },
+        a: p(0.5),
         b: { x: "no" },
-        "../c": { x: 0, y: 0, w: 0.1, r: 0 },
+        c: { wide: p(0.1), tall: { x: "no" } },
+        "../d": p(0),
       })
-    ).toEqual({ a: { x: 0.5, y: 0.5, w: 0.2, r: 0 } });
+    ).toEqual({ a: { wide: p(0.5) }, c: { wide: p(0.1) } });
     expect(readArrangement(null)).toEqual({});
     expect(readArrangement([1, 2])).toEqual({});
+  });
+
+  it("an upright stage takes the wide place until it has its own", () => {
+    expect(placementFor({ wide: p(0.1) }, "tall")).toEqual(p(0.1));
+    expect(placementFor({ wide: p(0.1), tall: p(0.9) }, "tall")).toEqual(
+      p(0.9)
+    );
+    expect(placementFor({ tall: p(0.9) }, "wide")).toBeNull();
+    expect(placementFor(undefined, "wide")).toBeNull();
   });
 
   it("reads a move from the page – or nothing", () => {
     expect(readArrangeRequest({ sticker: "a", placement: null })).toEqual({
       sticker: "a",
       placement: null,
+      shape: "wide",
     });
+    expect(
+      readArrangeRequest({ sticker: "a", placement: p(0.3), shape: "tall" })
+    ).toEqual({ sticker: "a", placement: p(0.3), shape: "tall" });
     expect(
       readArrangeRequest({ sticker: "a", placement: { x: 1 } })
     ).toBeNull();
@@ -65,24 +81,26 @@ describe("arranging", () => {
     expect(readArrangeRequest("a")).toBeNull();
   });
 
-  it("sets one sticker, keeps the others, drops the gone", () => {
-    const stored = {
-      a: { x: 0.1, y: 0.1, w: 0.1, r: 0 },
-      gone: { x: 0.2, y: 0.2, w: 0.1, r: 0 },
-    };
-    const next = arrange(stored, ids, "b", { x: 0.7, y: 0.3, w: 0.2, r: 10 });
-    expect(next).toEqual({
-      a: { x: 0.1, y: 0.1, w: 0.1, r: 0 },
-      b: { x: 0.7, y: 0.3, w: 0.2, r: 10 },
+  it("sets one sticker on one shape, keeps the rest, drops the gone", () => {
+    const stored = { a: p(0.1), gone: p(0.2) };
+    expect(arrange(stored, ids, "b", p(0.7))).toEqual({
+      a: { wide: p(0.1) },
+      b: { wide: p(0.7) },
+    });
+    expect(arrange(stored, ids, "a", p(0.8), "tall")).toEqual({
+      a: { wide: p(0.1), tall: p(0.8) },
     });
   });
 
-  it("puts a sticker back on its default spot with null", () => {
-    const stored = { a: { x: 0.1, y: 0.1, w: 0.1, r: 0 } };
-    expect(arrange(stored, ids, "a", null)).toEqual({});
+  it("puts a sticker back on one shape with null – the other stays", () => {
+    const stored = { a: { wide: p(0.1), tall: p(0.8) } };
+    expect(arrange(stored, ids, "a", null, "tall")).toEqual({
+      a: { wide: p(0.1) },
+    });
+    expect(arrange({ a: p(0.1) }, ids, "a", null)).toEqual({});
   });
 
   it("never places a sticker the document doesn't have", () => {
-    expect(arrange({}, ids, "zz", { x: 0, y: 0, w: 0.1, r: 0 })).toEqual({});
+    expect(arrange({}, ids, "zz", p(0))).toEqual({});
   });
 });

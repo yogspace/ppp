@@ -2,7 +2,13 @@
 
 import { useRef } from "react";
 import type { StickerData } from "@/features/player/types";
-import type { Arrangement, Placement, Spots } from "./arrangement";
+import {
+  type Arrangement,
+  type Placement,
+  placementFor,
+  type Shape,
+  type Spots,
+} from "./arrangement";
 import { Sticker } from "./sticker";
 
 type Props = {
@@ -18,7 +24,12 @@ type Props = {
   delay?: number;
   /** Bigger than placed (a phone held upright) – where they sit stays. */
   scale?: number;
-  onArrange?: (id: string, placement: Placement | null) => void;
+  /**
+   * The stage's shape: each sticker lies where it was arranged for it (an
+   * upright one, without its own place, where it lies across).
+   */
+  shape?: Shape;
+  onArrange?: (id: string, placement: Placement | null, shape: Shape) => void;
 };
 
 /**
@@ -34,6 +45,7 @@ export const StickerLayer = ({
   hidden = false,
   delay = 0.4,
   scale = 1,
+  shape = "wide",
   onArrange,
 }: Props) => {
   const layerRef = useRef<HTMLDivElement>(null);
@@ -48,12 +60,14 @@ export const StickerLayer = ({
           index={index}
           key={sticker.id}
           layerRef={layerRef}
-          onArrange={onArrange}
+          onArrange={
+            onArrange && ((id, placement) => onArrange(id, placement, shape))
+          }
           scale={scale}
           size={size}
           spots={spots}
           sticker={sticker}
-          stored={arrangement[sticker.id] ?? null}
+          stored={placementFor(arrangement[sticker.id], shape)}
         />
       ))}
     </div>
